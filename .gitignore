@@ -1,0 +1,15 @@
+Makefile
+config.h
+config.status
+libtool
+man/Makefile
+psfex.spec
+src/.deps/
+src/Makefile
+src/fits/.deps/
+src/fits/Makefile
+src/levmar/.deps/
+src/levmar/Makefile
+src/wcs/.deps/
+src/wcs/Makefile
+stamp-h1
