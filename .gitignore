@@ -13,3 +13,8 @@ src/levmar/Makefile
 src/wcs/.deps/
 src/wcs/Makefile
 stamp-h1
+autom4te.cache/
+src/fits/libfits.a
+src/levmar/liblevmar.a
+src/psfex
+src/wcs/libwcs_c.a
