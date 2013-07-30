@@ -18,3 +18,11 @@ src/fits/libfits.a
 src/levmar/liblevmar.a
 src/psfex
 src/wcs/libwcs_c.a
+
+# Produced by scons, in building the library
+.sconf_temp/
+.sconsign.dblite
+*.os
+python/astromatic/psfex/version.py
+lib/libpsfex.so
+ups/psfex.cfgc
