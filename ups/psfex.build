@@ -1,0 +1,9 @@
+git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex.git @VERSION@ | tar --extract --verbose -C psfex &&
+product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
+./configure CC="${CC:-cc} -Wno-empty-body -Wno-format -Wno-format-security" \
+    --prefix=$product_dir \
+    --with-fftw-incdir=$FFTW_DIR/include --with-fftw-libdir=$FFTW_DIR/lib \
+    --with-atlas-incdir=$ATLAS_DIR/include --with-atlas-libdir=$ATLAS_DIR/lib &&
+make &&
+make install &&
+scons opt=3 install prefix=$product_dir version=@VERSION@
