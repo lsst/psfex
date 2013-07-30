@@ -1,8 +1,8 @@
 if (type == build) {
     setupRequired(sconsUtils)
 }
-setupOptional(atlas)
-setupOptional(pyfits)
+setupRequired(atlas)
+setupRequired(fftw)
 
 envPrepend(PATH, ${PRODUCT_DIR}/bin)
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
