@@ -1,4 +1,5 @@
-git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex.git @VERSION@ | tar --extract --verbose -C psfex &&
+git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex.git @VERSION@ | tar --extract --verbose &&
+cd psfex &&
 product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
 # We disable threads because FFTW is not built threaded
 ./configure CC="${CC:-cc} -Wno-empty-body -Wno-format -Wno-format-security" \
@@ -8,4 +9,5 @@ product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
     --with-atlas-incdir=$ATLAS_DIR/include --with-atlas-libdir=$ATLAS_DIR/lib &&
 make &&
 make install &&
+setup -j -r . &&
 scons opt=3 install prefix=$product_dir version=@VERSION@
