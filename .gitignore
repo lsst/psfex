@@ -18,6 +18,7 @@ src/fits/libfits.a
 src/levmar/liblevmar.a
 src/psfex
 src/wcs/libwcs_c.a
+man/psfex.1
 
 # Produced by scons, in building the library
 .sconf_temp/
