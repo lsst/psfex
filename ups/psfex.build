@@ -1,4 +1,4 @@
-git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex.git @VERSION@ | tar --extract --verbose &&
+git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex.git @REPOVERSION@ | tar --extract --verbose &&
 cd psfex &&
 product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
 # We disable threads because FFTW is not built threaded
