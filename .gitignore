@@ -24,6 +24,6 @@ man/psfex.1
 .sconf_temp/
 .sconsign.dblite
 *.os
-python/astromatic/psfex/version.py
+python/astromatic/psfex/version.py*
 lib/libpsfex.so
 ups/psfex.cfgc
