@@ -77,6 +77,9 @@
 /* Define if you have the LAPACKe libraries. */
 #undef HAVE_LAPACKE
 
+/* Define to 1 if you have the <lapacke.h> header file. */
+#undef HAVE_LAPACKE_H
+
 /* Define to 1 if you have the `cblas' library (-lcblas). */
 #undef HAVE_LIBCBLAS
 
@@ -162,9 +165,6 @@
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
-/* Define to 1 if you have the <sys/param.h> header file. */
-#undef HAVE_SYS_PARAM_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -209,9 +209,6 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
@@ -245,11 +242,6 @@
 
 /* Default URL of the XSLT filter */
 #undef XSL_URL
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
