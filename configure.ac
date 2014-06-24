@@ -170,6 +170,9 @@ AC_ARG_WITH(mkl-dir,
 	[AS_HELP_STRING([--with-mkl-dir=<MKL path>],
 	[Provide an alternative path to the MKL library])])
 
+AC_ARG_WITH(lapacke,
+	[AS_HELP_STRING([--with-lapacke],
+	[Provide path to LAPACKE])])
 
 # Provide a special option for the default XSLT URL
 with_xsl_url="file://"$(URBI_RESOLVE_DIR([$datadir]))"/$PACKAGE_NAME/$PACKAGE_NAME.xsl"
@@ -244,6 +247,20 @@ else
 	  AC_MSG_WARN([$FFTW_WARN])
 	fi,
 	AC_MSG_ERROR([$FFTW_ERROR Exiting.]))
+
+################ handle the LAPACKe library (linear algebra) #################
+  if test "x$with_lapacke" != "x"; then
+    LIBS="$LIBS -L${with_lapacke}/lib"
+    CFLAGS="$CFLAGS -I${with_lapacke}/include"
+    CPPFLAGS="$CPPFLAGS -I${with_lapacke}/include"
+    AC_CHECK_HEADERS([lapacke.h], [], AC_MSG_ERROR(["Can't find lapacke header"]))
+    AC_CHECK_LIB([lapacke], [LAPACKE_dposv],
+                 [LIBS="$LIBS -llapacke -llapack -lblas -lm -lgfortran"],
+                 AC_MSG_ERROR(["Can't find lapacke library"]),
+                 [-llapack -lblas -lm -lgfortran])
+    AC_DEFINE(HAVE_LAPACKE,1, [Define if you have the LAPACKe libraries.])
+    AC_DEFINE_UNQUOTED(LAPACKE_H, "lapacke.h", [LAPACKe header filename.])
+  else
 ################# handle the ATLAS library (linear algebra) ##################
   ACX_ATLAS($with_atlas_libdir,$with_atlas_incdir,$use_pthreads,
 	[LIBS="$ATLAS_LIBS $LIBS"]
@@ -251,6 +268,7 @@ else
 	  AC_MSG_WARN([$ATLAS_WARN])
 	fi,
 	AC_MSG_ERROR([$ATLAS_ERROR Exiting.]))
+  fi
 fi
 
 ################# handle the PLPlot library (graphic plots) ##################
