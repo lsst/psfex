@@ -2,7 +2,7 @@ git archive --format=tar --prefix=psfex/ --remote=git://hsca.ipmu.jp/repos/psfex
 cd psfex &&
 product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
 # We disable threads because FFTW is not built threaded
-./configure CC="${CC:-cc} -Wno-empty-body -Wno-format -Wno-format-security" \
+./configure CC="${CC:-gcc} -Wno-empty-body -Wno-format -Wno-format-security" \
     --prefix=$product_dir \
     --disable-threads \
     --with-fftw-incdir=$FFTW_DIR/include --with-fftw-libdir=$FFTW_DIR/lib \
