@@ -1,28 +1,28 @@
 /*
-*				homo.c
+*                               homo.c
 *
 * PSF homogenisation.
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 *
-*	This file part of:	PSFEx
+*       This file part of:      PSFEx
 *
-*	Copyright:		(C) 2008-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
+*       Copyright:              (C) 2008-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
 *
-*	License:		GNU General Public License
+*       License:                GNU General Public License
 *
-*	PSFEx is free software: you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License as published by
-*	the Free Software Foundation, either version 3 of the License, or
-* 	(at your option) any later version.
-*	PSFEx is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*	GNU General Public License for more details.
-*	You should have received a copy of the GNU General Public License
-*	along with PSFEx.  If not, see <http://www.gnu.org/licenses/>.
+*       PSFEx is free software: you can redistribute it and/or modify
+*       it under the terms of the GNU General Public License as published by
+*       the Free Software Foundation, either version 3 of the License, or
+*       (at your option) any later version.
+*       PSFEx is distributed in the hope that it will be useful,
+*       but WITHOUT ANY WARRANTY; without even the implied warranty of
+*       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*       GNU General Public License for more details.
+*       You should have received a copy of the GNU General Public License
+*       along with PSFEx.  If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		20/11/2012
+*       Last modified:          20/11/2012
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -30,22 +30,22 @@
 #include        "config.h"
 #endif
 
-#include	<math.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#include        <math.h>
+#include        <stdio.h>
+#include        <stdlib.h>
+#include        <string.h>
 
-#include	"define.h"
-#include	"types.h"
-#include	"globals.h"
-#include	"fits/fitscat.h"
-#include	"diagnostic.h"
-#include	"fft.h"
-#include	"homo.h"
-#include	"prefs.h"
-#include	"wcs/poly.h"
-#include	"psf.h"
-#include	"vignet.h"
+#include        "define.h"
+#include        "types.h"
+#include        "globals.h"
+#include        "fits/fitscat.h"
+#include        "diagnostic.h"
+#include        "fft.h"
+#include        "homo.h"
+#include        "prefs.h"
+#include        "wcs/poly.h"
+#include        "psf.h"
+#include        "vignet.h"
 
 #ifdef HAVE_ATLAS
 #include ATLAS_LAPACK_H
@@ -56,33 +56,38 @@
 //#define MATSTORAGE_PACKED 1
 #endif
 
+#ifdef HAVE_CLAPACK
+#include <f2c.h>
+#include CLAPACK_H
+#endif
+
 /****** psf_homo *******************************************************
-PROTO	void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
-		int homobasis_number, double homobasis_scale,
-		int ext, int next)
-PURPOSE	Compute an homogenization kernel based on an idealised PSF.
-INPUT	Pointer to the PSF structure.
+PROTO   void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
+                int homobasis_number, double homobasis_scale,
+                int ext, int next)
+PURPOSE Compute an homogenization kernel based on an idealised PSF.
+INPUT   Pointer to the PSF structure.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 10/07/2012
  ***/
-void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
-		int homobasis_number, double homobasis_scale,
-		int ext, int next)
+void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
+                int homobasis_number, double homobasis_scale,
+                int ext, int next)
   {
-   moffatstruct		*moffat;
-   polystruct		*poly;
-   double		dpos[POLY_MAXDIM],
-			*amat,*amatt, *bmat,*bmatt, *cross,*tcross, *coeff,
-			dstep,dstart, dval;
-   float		*basis,*basisc,*basis1,*basis2, *bigbasis, *fbigbasis,
-			*bigconv, *target,
-			*kernel,*kernelt,
-			a;
-   int			bigsize[2],
-			c,c1,c2,c3,c4,d,f1,f2,i,j,j1,j2,n,p,
-			nt, npix,nbigpix, ndim, nbasis,ncoeff,nfree;
+   moffatstruct         *moffat;
+   polystruct           *poly;
+   double               dpos[POLY_MAXDIM],
+                        *amat,*amatt, *bmat,*bmatt, *cross,*tcross, *coeff,
+                        dstep,dstart, dval;
+   float                *basis,*basisc,*basis1,*basis2, *bigbasis, *fbigbasis,
+                        *bigconv, *target,
+                        *kernel,*kernelt,
+                        a;
+   int                  bigsize[2],
+                        c,c1,c2,c3,c4,d,f1,f2,i,j,j1,j2,n,p,
+                        nt, npix,nbigpix, ndim, nbasis,ncoeff,nfree;
 
 //  NFPRINTF(OUTPUT,"Computing the PSF homogenization kernel...");
 
@@ -94,7 +99,7 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
 
 /* Create kernel basis */
   nbasis = psf_pshapelet(&basis, psf->size[0],psf->size[1],
-	homobasis_number, sqrt(homobasis_number+1.0)*homobasis_scale);
+        homobasis_number, sqrt(homobasis_number+1.0)*homobasis_scale);
   nfree = nbasis*ncoeff;
 
 /* Create idealized PSF */
@@ -107,7 +112,7 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
   moffat->beta = homopsf_params[1];
   moffat->nsubpix = 1;
   psf_moffat(psf, moffat);
-  target = NULL;		/* to avoid gcc -Wall warnings */
+  target = NULL;                /* to avoid gcc -Wall warnings */
   QMEMCPY(psf->loc, target, float, npix);
   free(moffat);
 
@@ -128,16 +133,16 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
   for (i=0; i<nbasis; i++)
     {
     vignet_copy(&basis[i*npix], psf->size[0],psf->size[1],
-	bigbasis, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
+        bigbasis, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
     fft_shift(bigbasis, bigsize[0], bigsize[1]);
     fbigbasis = fft_rtf(bigbasis, bigsize[0], bigsize[1]);
     for (c=0; c<ncoeff; c++, f1++)
       {
       vignet_copy(&psf->comp[c*npix], psf->size[0],psf->size[1],
-	bigconv, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
+        bigconv, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
       fft_conv(bigconv, fbigbasis, bigsize[0], bigsize[1]);
       vignet_copy(bigconv, bigsize[0],bigsize[1],
-	&basisc[f1*npix], psf->size[0],psf->size[1], 0,0, VIGNET_CPY);
+        &basisc[f1*npix], psf->size[0],psf->size[1], 0,0, VIGNET_CPY);
       basis2 = basisc;
       for (f2=0; f2<=f1; f2++)
         {
@@ -223,6 +228,10 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
  #else
   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nfree,1,amat,nfree,bmat,nfree) != 0)
  #endif
+#elif defined(HAVE_CLAPACK)
+  integer one = 1, info = 0;
+  dposv_("L", &nfree, &one, amat, &nfree, bmat, &nfree, &info);
+  if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nfree,1,amat,nfree,bmat,nfree)!=0)
 #endif
@@ -249,11 +258,11 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
 /* Normalize kernel (with respect to continuum) */
 /*
   vignet_copy(kernel, psf->size[0],psf->size[1],
-	bigconv, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
+        bigconv, bigsize[0],bigsize[1], 0,0, VIGNET_CPY);
   fft_conv(bigconv, fbigpsf, bigsize[0], bigsize[1]);
   QMALLOC(kernorm, float, npix);
   vignet_copy(bigconv, bigsize[0],bigsize[1],
-	kernorm, psf->size[0],psf->size[1], 0,0, VIGNET_CPY);
+        kernorm, psf->size[0],psf->size[1], 0,0, VIGNET_CPY);
 */
   dval = 0.0;
   kernelt = kernel;
@@ -281,24 +290,24 @@ void	psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
 
 
 /****** psf_savehomo **********************************************************
-PROTO   void	psf_savehomo(psfstruct *psf, char *filename, int ext, int next)
+PROTO   void    psf_savehomo(psfstruct *psf, char *filename, int ext, int next)
 PURPOSE Save the PSF homogenization kernel data as a FITS file.
 INPUT   Pointer to the PSF structure,
-	Filename,
-	Extension number,
-	Number of extensions.
+        Filename,
+        Extension number,
+        Number of extensions.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 23/03/2011
  ***/
-void	psf_savehomo(psfstruct *psf, char *filename, int ext, int next)
+void    psf_savehomo(psfstruct *psf, char *filename, int ext, int next)
   {
-   static catstruct	*cat;
-   tabstruct		*tab;
-   polystruct		*poly;
-   char			str[88];
-   int			i, temp;
+   static catstruct     *cat;
+   tabstruct            *tab;
+   polystruct           *poly;
+   char                 str[88];
+   int                  i, temp;
 
 /* Create the new cat (well it is not a "cat", but simply a FITS table */
   if (!ext)
@@ -346,10 +355,10 @@ void	psf_savehomo(psfstruct *psf, char *filename, int ext, int next)
   /* -- FM -- : write fwhm too */
   addkeywordto_head(tab, "PSF_FWHM", "FWHM of target PSF");
   fitswrite(tab->headbuf, "PSF_FWHM", &psf->homopsf_params[0],
-	H_FLOAT,T_DOUBLE);
+        H_FLOAT,T_DOUBLE);
   addkeywordto_head(tab, "PSF_BETA", "Moffat Beta of target PSF");
   fitswrite(tab->headbuf, "PSF_BETA", &psf->homopsf_params[1],
-	H_FLOAT,T_DOUBLE);
+        H_FLOAT,T_DOUBLE);
   addkeywordto_head(tab, "PSF_SAMP", "Sampling step of the PSF data");
   fitswrite(tab->headbuf, "PSF_SAMP", &psf->pixstep, H_FLOAT, T_FLOAT);
   tab->bitpix = BP_FLOAT;

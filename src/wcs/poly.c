@@ -1,42 +1,42 @@
 /*
-*				poly.c
+*                               poly.c
 *
 * Polynomial functions.
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 *
-*	This file part of:	AstrOmatic software
+*       This file part of:      AstrOmatic software
 *
-*	Copyright:		(C) 1998-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
+*       Copyright:              (C) 1998-2012 Emmanuel Bertin -- IAP/CNRS/UPMC
 *
-*	License:		GNU General Public License
+*       License:                GNU General Public License
 *
-*	AstrOmatic software is free software: you can redistribute it and/or
-*	modify it under the terms of the GNU General Public License as
-*	published by the Free Software Foundation, either version 3 of the
-*	License, or (at your option) any later version.
-*	AstrOmatic software is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*	GNU General Public License for more details.
-*	You should have received a copy of the GNU General Public License
-*	along with AstrOmatic software.
-*	If not, see <http://www.gnu.org/licenses/>.
+*       AstrOmatic software is free software: you can redistribute it and/or
+*       modify it under the terms of the GNU General Public License as
+*       published by the Free Software Foundation, either version 3 of the
+*       License, or (at your option) any later version.
+*       AstrOmatic software is distributed in the hope that it will be useful,
+*       but WITHOUT ANY WARRANTY; without even the implied warranty of
+*       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*       GNU General Public License for more details.
+*       You should have received a copy of the GNU General Public License
+*       along with AstrOmatic software.
+*       If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		20/11/2012
+*       Last modified:          20/11/2012
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #ifdef HAVE_CONFIG_H
-#include	"config.h"
+#include        "config.h"
 #endif
 
-#include	<math.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#include        <math.h>
+#include        <stdio.h>
+#include        <stdlib.h>
+#include        <string.h>
 
-#include	"poly.h"
+#include        "poly.h"
 
 #ifdef HAVE_ATLAS
 #include ATLAS_LAPACK_H
@@ -47,28 +47,33 @@
 //#define MATSTORAGE_PACKED 1
 #endif
 
-#define	QCALLOC(ptr, typ, nel) \
-		{if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
-		  qerror("Not enough memory for ", \
-			#ptr " (" #nel " elements) !");;}
+#ifdef HAVE_CLAPACK
+#include <f2c.h>
+#include CLAPACK_H
+#endif
 
-#define	QMALLOC(ptr, typ, nel) \
-		{if (!(ptr = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
-		  qerror("Not enough memory for ", \
-			#ptr " (" #nel " elements) !");;}
+#define QCALLOC(ptr, typ, nel) \
+                {if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
+                  qerror("Not enough memory for ", \
+                        #ptr " (" #nel " elements) !");;}
+
+#define QMALLOC(ptr, typ, nel) \
+                {if (!(ptr = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
+                  qerror("Not enough memory for ", \
+                        #ptr " (" #nel " elements) !");;}
 
 #define QMEMCPY(ptrin, ptrout, typ, nel) \
-		{if (ptrin) \
-		  {if (!(ptrout = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
-		    qerror("Not enough memory for ", \
-			#ptrout " (" #nel " elements) !"); \
-		memcpy(ptrout, ptrin, (size_t)(nel)*sizeof(typ));};;}
+                {if (ptrin) \
+                  {if (!(ptrout = (typ *)malloc((size_t)(nel)*sizeof(typ)))) \
+                    qerror("Not enough memory for ", \
+                        #ptrout " (" #nel " elements) !"); \
+                memcpy(ptrout, ptrin, (size_t)(nel)*sizeof(typ));};;}
 
 /********************************* qerror ************************************/
 /*
 I hope it will never be used!
 */
-void	qerror(char *msg1, char *msg2)
+void    qerror(char *msg1, char *msg2)
   {
   fprintf(stderr, "\n> %s%s\n\n",msg1,msg2);
   exit(-1);
@@ -87,20 +92,20 @@ NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 30/08/2011
  ***/
-polystruct	*poly_init(int *group, int ndim, int *degree, int ngroup)
+polystruct      *poly_init(int *group, int ndim, int *degree, int ngroup)
   {
-   void	qerror(char *msg1, char *msg2);
-   polystruct	*poly;
-   char		str[512];
-   int		nd[POLY_MAXDIM];
-   int		*groupt,
-		d,g,n, num,den, dmax;
+   void qerror(char *msg1, char *msg2);
+   polystruct   *poly;
+   char         str[512];
+   int          nd[POLY_MAXDIM];
+   int          *groupt,
+                d,g,n, num,den, dmax;
 
   QCALLOC(poly, polystruct, 1);
   if ((poly->ndim=ndim) > POLY_MAXDIM)
     {
     sprintf(str, "The dimensionality of the polynom (%d) exceeds the maximum\n"
-		"allowed one (%d)", ndim, POLY_MAXDIM);
+                "allowed one (%d)", ndim, POLY_MAXDIM);
     qerror("*Error*: ", str);
     }
 
@@ -112,7 +117,7 @@ polystruct	*poly_init(int *group, int ndim, int *degree, int ngroup)
   poly->ngroup = ngroup;
   if (ngroup)
     {
-    group = poly->group;	/* Forget the original *group */
+    group = poly->group;        /* Forget the original *group */
 
     QMALLOC(poly->degree, int, poly->ngroup);
 
@@ -133,7 +138,7 @@ polystruct	*poly_init(int *group, int ndim, int *degree, int ngroup)
     if ((dmax=poly->degree[g]=*(degree++))>POLY_MAXDEGREE)
       {
       sprintf(str, "The degree of the polynom (%d) exceeds the maximum\n"
-		"allowed one (%d)", poly->degree[g], POLY_MAXDEGREE);
+                "allowed one (%d)", poly->degree[g], POLY_MAXDEGREE);
       qerror("*Error*: ", str);
       }
 
@@ -160,7 +165,7 @@ NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 04/11/2008
  ***/
-void	poly_end(polystruct *poly)
+void    poly_end(polystruct *poly)
   {
   if (poly)
     {
@@ -189,7 +194,7 @@ VERSION 04/11/2008
  ***/
 polystruct *poly_copy(polystruct *poly)
   {
-   polystruct	*newpoly;
+   polystruct   *newpoly;
 
   if (poly)
     {
@@ -207,9 +212,9 @@ polystruct *poly_copy(polystruct *poly)
     if (poly->orthomat)
       {
       QMEMCPY(poly->orthomat, newpoly->orthomat, double,
-		poly->ncoeff*poly->ncoeff);
+                poly->ncoeff*poly->ncoeff);
       QMEMCPY(poly->deorthomat, newpoly->deorthomat, double,
-		poly->ncoeff*poly->ncoeff);
+                poly->ncoeff*poly->ncoeff);
       QMEMCPY(poly->orthobasis, newpoly->orthobasis, double, poly->ncoeff);
       }
 
@@ -230,14 +235,14 @@ NOTES   Values of the basis functions are updated in poly->basis.
 AUTHOR  E. Bertin (IAP)
 VERSION 03/03/2004
  ***/
-double	poly_func(polystruct *poly, double *pos)
+double  poly_func(polystruct *poly, double *pos)
   {
-   double	xpol[POLY_MAXDIM+1];
-   double      	*post, *xpolt, *basis, *coeff, xval;
-   long double	val;
-   int		expo[POLY_MAXDIM+1], gexpo[POLY_MAXDIM+1];
-   int	       	*expot, *degree,*degreet, *group,*groupt, *gexpot,
-			d,g,t, ndim;
+   double       xpol[POLY_MAXDIM+1];
+   double       *post, *xpolt, *basis, *coeff, xval;
+   long double  val;
+   int          expo[POLY_MAXDIM+1], gexpo[POLY_MAXDIM+1];
+   int          *expot, *degree,*degreet, *group,*groupt, *gexpot,
+                        d,g,t, ndim;
 
 /* Prepare the vectors and counters */
   ndim = poly->ndim;
@@ -308,7 +313,7 @@ INPUT   polystruct pointer,
         pointer to the 1D array of data weights,
         number of data points,
         pointer to a (pseudo)2D array of computed basis function values.
-	Tikhonov regularization parameter (0 = no regularization).
+        Tikhonov regularization parameter (0 = no regularization).
 OUTPUT  Chi2 of the fit.
 NOTES   If different from NULL, extbasis can be provided to store the
         values of the basis functions. If x==NULL and extbasis!=NULL, the
@@ -317,20 +322,20 @@ NOTES   If different from NULL, extbasis can be provided to store the
 AUTHOR  E. Bertin (IAP)
 VERSION 20/11/2012
  ***/
-int	poly_fit(polystruct *poly, double *x, double *y, double *w, int ndata,
-		double *extbasis, double regul)
+int     poly_fit(polystruct *poly, double *x, double *y, double *w, int ndata,
+                double *extbasis, double regul)
   {
-   void	qerror(char *msg1, char *msg2);
-   double	/*offset[POLY_MAXDIM],*/x2[POLY_MAXDIM],
-		*alpha,*alphat, *beta,*betat, *basis,*basis1,*basis2, *coeff,
-		*extbasist,*xt,
-		val,wval,yval;
-   int		ncoeff, ndim, matsize, info,
-		d,i,j,n;
+   void qerror(char *msg1, char *msg2);
+   double       /*offset[POLY_MAXDIM],*/x2[POLY_MAXDIM],
+                *alpha,*alphat, *beta,*betat, *basis,*basis1,*basis2, *coeff,
+                *extbasist,*xt,
+                val,wval,yval;
+   int          ncoeff, ndim, matsize, info,
+                d,i,j,n;
 
   if (!x && !extbasis)
     qerror("*Internal Error*: One of x or extbasis should be "
-	"different from NULL\nin ", "poly_func()");
+        "different from NULL\nin ", "poly_func()");
   ncoeff = poly->ncoeff;
   ndim = poly->ndim;
   matsize = ncoeff*ncoeff;
@@ -350,9 +355,9 @@ int	poly_fit(polystruct *poly, double *x, double *y, double *w, int ndata,
       for (d=0; d<ndim; d++)
         offset[d] += *(xt++);
     for (d=0; d<ndim; d++)
-      offset[d] /= (double)ndata;    
+      offset[d] /= (double)ndata;
     }
-*/ 
+*/
 /* Build the covariance matrix */
   xt = x;
   for (n=ndata; n--;)
@@ -361,7 +366,7 @@ int	poly_fit(polystruct *poly, double *x, double *y, double *w, int ndata,
       {
 /*---- If x!=NULL, compute the basis functions */
       for (d=0; d<ndim; d++)
-        x2[d] = *(xt++)/* - offset[d]*/;     
+        x2[d] = *(xt++)/* - offset[d]*/;
       poly_func(poly, x2);
 /*---- If, in addition, extbasis is provided, then fill it */
       if (extbasis)
@@ -414,22 +419,22 @@ int	poly_fit(polystruct *poly, double *x, double *y, double *w, int ndata,
 /****** poly_addcste *********************************************************
 PROTO   void poly_addcste(polystruct *poly, double *cste)
 PURPOSE Modify matrix coefficients to mimick the effect of adding a cst to
-	the input of a polynomial.
+        the input of a polynomial.
 INPUT   Pointer to the polynomial structure,
         Pointer to the vector of cst.
 OUTPUT  -.
 NOTES   Requires quadruple-precision. **For the time beeing, this function
-	returns completely wrong results!!**
+        returns completely wrong results!!**
 AUTHOR  E. Bertin (IAP)
 VERSION 05/10/2010
  ***/
-void	poly_addcste(polystruct *poly, double *cste)
+void    poly_addcste(polystruct *poly, double *cste)
   {
-   long double	*acoeff;
-   double	*coeff,*mcoeff,*mcoefft,
-		val;
-   int		*mpowers,*powers,*powerst,*powerst2,
-		i,j,n,p, denum, flag, maxdegree, ncoeff, ndim;
+   long double  *acoeff;
+   double       *coeff,*mcoeff,*mcoefft,
+                val;
+   int          *mpowers,*powers,*powerst,*powerst2,
+                i,j,n,p, denum, flag, maxdegree, ncoeff, ndim;
 
   ncoeff = poly->ncoeff;
   ndim = poly->ndim;
@@ -437,11 +442,11 @@ void	poly_addcste(polystruct *poly, double *cste)
   for (j=0; j<poly->ngroup; j++)
     if (maxdegree < poly->degree[j])
       maxdegree = poly->degree[j];
-  maxdegree++;		/* Actually we need maxdegree+1 terms */
+  maxdegree++;          /* Actually we need maxdegree+1 terms */
   QCALLOC(acoeff, long double, ncoeff);
   QCALLOC(mcoeff, double, ndim*maxdegree);
   QCALLOC(mpowers, int, ndim);
-  mcoefft = mcoeff;		/* To avoid gcc -Wall warnings */
+  mcoefft = mcoeff;             /* To avoid gcc -Wall warnings */
   powerst = powers = poly_powers(poly);
   coeff = poly->coeff;
   for (i=0; i<ncoeff; i++)
@@ -455,7 +460,7 @@ void	poly_addcste(polystruct *poly, double *cste)
       for (p=n+1; p--;)
         {
         *(mcoefft--) = val;
-        val *= (cste[j]*(n--))/(denum++);	/* This is C_n^p X^(n-p) */
+        val *= (cste[j]*(n--))/(denum++);       /* This is C_n^p X^(n-p) */
         }
       }
 /*-- Update all valid coefficients */
@@ -466,7 +471,7 @@ void	poly_addcste(polystruct *poly, double *cste)
       flag = 0;
       for (j=0; j<ndim; j++)
         if (mpowers[j] < powerst2[j])
-	  {
+          {
           flag = 1;
           powerst2 += ndim;
           break;
@@ -506,12 +511,16 @@ NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 20/11/2012
  ***/
-int	poly_solve(double *a, double *b, int n)
+int     poly_solve(double *a, double *b, int n)
   {
 #if defined(HAVE_LAPACKE)
   return LAPACKE_dposv(LAPACK_COL_MAJOR, 'L', n, 1, a, n, b, n);
 #elif defined(HAVE_ATLAS)
   return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
+#elif defined(HAVE_CLAPACK)
+  integer one = 1, info = 0;
+  dposv_("L", &n, &one, a, &n, b, &n, &info);
+  return info;
 #else
   return cholsolve(a,b,n);
 #endif
@@ -519,21 +528,21 @@ int	poly_solve(double *a, double *b, int n)
 
 
 /****** cholsolve *************************************************************
-PROTO	void cholsolve(double *a, double *b, int n)
-PURPOSE	Solve a system of linear equations, using Cholesky decomposition.
-INPUT	Pointer to the (pseudo 2D) matrix of coefficients,
-	pointer to the 1D column vector,
- 	matrix size.
-OUTPUT	-1 if the matrix is not positive-definite, 0 otherwise.
-NOTES	Based on algorithm described in Numerical Recipes, 2nd ed. (Chap 2.9).
-	The matrix of coefficients must be symmetric and positive definite.
-AUTHOR	E. Bertin (IAP)
-VERSION	10/10/2010
+PROTO   void cholsolve(double *a, double *b, int n)
+PURPOSE Solve a system of linear equations, using Cholesky decomposition.
+INPUT   Pointer to the (pseudo 2D) matrix of coefficients,
+        pointer to the 1D column vector,
+        matrix size.
+OUTPUT  -1 if the matrix is not positive-definite, 0 otherwise.
+NOTES   Based on algorithm described in Numerical Recipes, 2nd ed. (Chap 2.9).
+        The matrix of coefficients must be symmetric and positive definite.
+AUTHOR  E. Bertin (IAP)
+VERSION 10/10/2010
  ***/
-int	cholsolve(double *a, double *b, int n)
+int     cholsolve(double *a, double *b, int n)
   {
-   double	*p, *x, sum;
-   int		i,j,k;
+   double       *p, *x, sum;
+   int          i,j,k;
 
 /* Allocate memory to store the diagonal elements */
   QMALLOC(p, double, n);
@@ -548,7 +557,7 @@ int	cholsolve(double *a, double *b, int n)
       if (i==j)
         {
         if (sum <= 0.0)
-	  {
+          {
           free(p);
           return -1;
           }
@@ -559,7 +568,7 @@ int	cholsolve(double *a, double *b, int n)
       }
 
 /* Solve the system */
-  x = b;		/* Just to save memory:  the solution replaces b */
+  x = b;                /* Just to save memory:  the solution replaces b */
   for (i=0; i<n; i++)
     {
     for (sum=b[i],k=i; k--;)
@@ -583,19 +592,19 @@ int	cholsolve(double *a, double *b, int n)
 
 /****** poly_powers ***********************************************************
 PROTO   int *poly_powers(polystruct *poly)
-PURPOSE	Return an array of powers of polynom terms
+PURPOSE Return an array of powers of polynom terms
 INPUT   polystruct pointer,
 OUTPUT  Pointer to an array of polynom powers (int *), (ncoeff*ndim numbers).
 NOTES   The returned pointer is mallocated.
 AUTHOR  E. Bertin (IAP)
 VERSION 23/10/2003
  ***/
-int	*poly_powers(polystruct *poly)
+int     *poly_powers(polystruct *poly)
   {
-   int		expo[POLY_MAXDIM+1], gexpo[POLY_MAXDIM+1];
-   int	       	*expot, *degree,*degreet, *group,*groupt, *gexpot,
-		*powers, *powerst,
-		d,g,t, ndim;
+   int          expo[POLY_MAXDIM+1], gexpo[POLY_MAXDIM+1];
+   int          *expot, *degree,*degreet, *group,*groupt, *gexpot,
+                *powers, *powerst,
+                d,g,t, ndim;
 
 /* Prepare the vectors and counters */
   ndim = poly->ndim;
@@ -646,21 +655,21 @@ int	*poly_powers(polystruct *poly)
 /****** poly_initortho ********************************************************
 PROTO   void poly_initortho(polystruct *poly, double *data, int ndata)
 PURPOSE Compute orthonormalization and de-orthonormalization matrices for a
-	polynomial basis on a data set.
+        polynomial basis on a data set.
 INPUT   polystruct pointer,
         pointer to the 1D array of input vector data,
-	number of data vectors.
+        number of data vectors.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 10/07/2012
  ***/
-void	poly_initortho(polystruct *poly, double *data, int ndata)
+void    poly_initortho(polystruct *poly, double *data, int ndata)
   {
-   double	*basis, *coeff, *invec,*invect0,*invect,*invect02,*invect2,
-		*rdiag, *deortho,
-		scale,s, dval;
-   int		c,i,j,m,n, ndmc, ndim,ncoeff;
+   double       *basis, *coeff, *invec,*invect0,*invect,*invect02,*invect2,
+                *rdiag, *deortho,
+                scale,s, dval;
+   int          c,i,j,m,n, ndmc, ndim,ncoeff;
 
 /* Prepare the vectors and counters */
   ndim = poly->ndim;
@@ -725,7 +734,10 @@ void	poly_initortho(polystruct *poly, double *data, int ndata)
   LAPACKE_dtrtri(LAPACK_ROW_MAJOR, 'L', 'N', ncoeff,poly->orthomat,ncoeff);
 #elif defined(HAVE_ATLAS)
   clapack_dtrtri(CblasRowMajor, CblasLower, CblasNonUnit, ncoeff,
-	poly->orthomat, ncoeff);
+        poly->orthomat, ncoeff);
+#elif defined(HAVE_CLAPACK)
+  integer info = 0;
+  dtrtri_("L", "N", &ncoeff, &poly->orthomat, &ncoeff, &info);
 #else
   qerror("*Internal Error*: no routine available", " for triangular inverse");
 #endif
@@ -748,18 +760,18 @@ void	poly_initortho(polystruct *poly, double *data, int ndata)
 PROTO   void poly_ortho(polystruct *poly, double *datain, double *dataout)
 PURPOSE Apply orthonormalization to the poly basis vector ("ket>").
 INPUT   polystruct pointer,
-	pointer to the input vector,
-	pointer to the output vector.
+        pointer to the input vector,
+        pointer to the output vector.
 OUTPUT  Pointer to poly->orthobasis, or poly->basis if no ortho. matrix exists.
 NOTES   The poly->basis vector must have been updated with poly_func() first.
 AUTHOR  E. Bertin (IAP)
 VERSION 04/11/2008
  ***/
-double	*poly_ortho(polystruct *poly, double *datain, double *dataout)
+double  *poly_ortho(polystruct *poly, double *datain, double *dataout)
   {
-   double	*omat,*basis,*obasis,
-		dval;
-   int		i,j, ncoeff;
+   double       *omat,*basis,*obasis,
+                dval;
+   int          i,j, ncoeff;
 
   if (!poly->orthomat)
     return datain;
@@ -786,18 +798,18 @@ double	*poly_ortho(polystruct *poly, double *datain, double *dataout)
 PROTO   void poly_deortho(polystruct *poly, double *datain, double *dataout)
 PURPOSE Apply deorthonormalization to the poly basis component vector("<bra|").
 INPUT   polystruct pointer,
-	pointer to the input vector,
-	pointer to the output vector.
+        pointer to the input vector,
+        pointer to the output vector.
 OUTPUT  Pointer to poly->basis.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 04/11/2008
  ***/
-double	*poly_deortho(polystruct *poly, double *datain, double *dataout)
+double  *poly_deortho(polystruct *poly, double *datain, double *dataout)
   {
-   double	*omat,*basis,*obasis,
-		dval;
-   int		i,j, ncoeff;
+   double       *omat,*basis,*obasis,
+                dval;
+   int          i,j, ncoeff;
 
   if (!poly->deorthomat)
     return datain;

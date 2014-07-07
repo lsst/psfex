@@ -6,6 +6,9 @@
 /* CLAPACK header filename. */
 #undef ATLAS_LAPACK_H
 
+/* CLAPACK header filename. */
+#undef CLAPACK_H
+
 /* Archive creation date */
 #undef DATE
 
@@ -29,6 +32,9 @@
 
 /* Define to 1 if you have the <cblas.h> header file. */
 #undef HAVE_CBLAS_H
+
+/* Define if you have the CLAPACK libraries. */
+#undef HAVE_CLAPACK
 
 /* Define to 1 if you have the <clapack.h> header file. */
 #undef HAVE_CLAPACK_H

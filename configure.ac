@@ -170,6 +170,10 @@ AC_ARG_WITH(mkl-dir,
 	[AS_HELP_STRING([--with-mkl-dir=<MKL path>],
 	[Provide an alternative path to the MKL library])])
 
+AC_ARG_WITH(clapack,
+	[AS_HELP_STRING([--with-clapack],
+	[Provide path to CLAPACK])])
+
 AC_ARG_WITH(lapacke,
 	[AS_HELP_STRING([--with-lapacke],
 	[Provide path to LAPACKE])])
@@ -248,8 +252,20 @@ else
 	fi,
 	AC_MSG_ERROR([$FFTW_ERROR Exiting.]))
 
+################ handle the clapack library (linear algebra) #################
+  if test "x$with_clapack" != "x"; then
+    LIBS="$LIBS -L${with_clapack}/lib"
+    CFLAGS="$CFLAGS -I${with_clapack}/include"
+    CPPFLAGS="$CPPFLAGS -I${with_clapack}/include"
+    AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]))
+    AC_CHECK_LIB([clapack], [dposv_],
+                 [LIBS="$LIBS -llapack -lblas -lf2c -lm"],
+                 AC_MSG_ERROR(["Can't find lapacke library"]),
+                 [-llapack -lblas -lf2c -lm])
+    AC_DEFINE(HAVE_CLAPACK,1, [Define if you have the CLAPACK libraries.])
+    AC_DEFINE_UNQUOTED(CLAPACK_H, "clapack.h", [CLAPACK header filename.])
 ################ handle the LAPACKe library (linear algebra) #################
-  if test "x$with_lapacke" != "x"; then
+  elif test "x$with_lapacke" != "x"; then
     LIBS="$LIBS -L${with_lapacke}/lib"
     CFLAGS="$CFLAGS -I${with_lapacke}/include"
     CPPFLAGS="$CPPFLAGS -I${with_lapacke}/include"

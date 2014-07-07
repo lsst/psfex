@@ -1,28 +1,28 @@
 /*
-*				psf.c
+*                               psf.c
 *
 * PSF management and modelling.
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 *
-*	This file part of:	PSFEx
+*       This file part of:      PSFEx
 *
-*	Copyright:		(C) 1997-2013 Emmanuel Bertin -- IAP/CNRS/UPMC
+*       Copyright:              (C) 1997-2013 Emmanuel Bertin -- IAP/CNRS/UPMC
 *
-*	License:		GNU General Public License
+*       License:                GNU General Public License
 *
-*	PSFEx is free software: you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License as published by
-*	the Free Software Foundation, either version 3 of the License, or
-* 	(at your option) any later version.
-*	PSFEx is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*	GNU General Public License for more details.
-*	You should have received a copy of the GNU General Public License
-*	along with PSFEx.  If not, see <http://www.gnu.org/licenses/>.
+*       PSFEx is free software: you can redistribute it and/or modify
+*       it under the terms of the GNU General Public License as published by
+*       the Free Software Foundation, either version 3 of the License, or
+*       (at your option) any later version.
+*       PSFEx is distributed in the hope that it will be useful,
+*       but WITHOUT ANY WARRANTY; without even the implied warranty of
+*       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*       GNU General Public License for more details.
+*       You should have received a copy of the GNU General Public License
+*       along with PSFEx.  If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		02/04/2013
+*       Last modified:          02/04/2013
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -30,22 +30,22 @@
 #include        "config.h"
 #endif
 
-#include	<math.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#include        <math.h>
+#include        <stdio.h>
+#include        <stdlib.h>
+#include        <string.h>
 
-#include	"define.h"
-#include	"types.h"
-#include	"globals.h"
-#include	"fits/fitscat.h"
-#include	"prefs.h"
-#include	"context.h"
-#include	"misc.h"
-#include	"wcs/poly.h"
-#include	"psf.h"
-#include	"sample.h"
-#include	"vignet.h"
+#include        "define.h"
+#include        "types.h"
+#include        "globals.h"
+#include        "fits/fitscat.h"
+#include        "prefs.h"
+#include        "context.h"
+#include        "misc.h"
+#include        "wcs/poly.h"
+#include        "psf.h"
+#include        "sample.h"
+#include        "vignet.h"
 
 #ifdef HAVE_ATLAS
 #include ATLAS_LAPACK_H
@@ -56,27 +56,32 @@
 //#define MATSTORAGE_PACKED 1
 #endif
 
-static double	psf_laguerre(double x, int p, int q);
+#ifdef HAVE_CLAPACK
+#include <f2c.h>
+#include CLAPACK_H
+#endif
+
+static double   psf_laguerre(double x, int p, int q);
 
 /****** psf_clean *************************************************************
-PROTO	double	psf_clean(psfstruct *psf, setstruct *set)
-PURPOSE	Filter out PSF candidates
-INPUT	Pointer to the PSF,
-	Pointer to the sample set,
-	PSF accuracy.
-OUTPUT	Reduced chi2.
-NOTES	-
-AUTHOR	E. Bertin (IAP)
-VERSION	19/02/2009
+PROTO   double  psf_clean(psfstruct *psf, setstruct *set)
+PURPOSE Filter out PSF candidates
+INPUT   Pointer to the PSF,
+        Pointer to the sample set,
+        PSF accuracy.
+OUTPUT  Reduced chi2.
+NOTES   -
+AUTHOR  E. Bertin (IAP)
+VERSION 19/02/2009
  ***/
-double	psf_clean(psfstruct *psf, setstruct *set, double prof_accuracy)
+double  psf_clean(psfstruct *psf, setstruct *set, double prof_accuracy)
   {
-#define	EPS	(1e-4)  /* a small number */
-   samplestruct	*sample;
-   double	chi2,chimean,chivar,chisig,chisig1,chival, locut,hicut;
-   float	*chi, *chit,*chit2,
-		chimed, chi2max;
-   int		i, n, nsample;
+#define EPS     (1e-4)  /* a small number */
+   samplestruct *sample;
+   double       chi2,chimean,chivar,chisig,chisig1,chival, locut,hicut;
+   float        *chi, *chit,*chit2,
+                chimed, chi2max;
+   int          i, n, nsample;
 
 /* First compute residuals for each sample (chi^2) */
 //  NFPRINTF(OUTPUT,"Computing residuals...");
@@ -153,20 +158,20 @@ double	psf_clean(psfstruct *psf, setstruct *set, double prof_accuracy)
 
 
 /****** psf_chi2 **************************************************************
-PROTO	double	psf_chi2(psfstruct *psf, setstruct *set)
-PURPOSE	Return the reduced chi2 of PSF-fitting.
-INPUT	Pointer to the PSF,
-	Pointer to the sample set.
-OUTPUT	Reduced chi2.
-NOTES	-.
-AUTHOR	E. Bertin (IAP)
-VERSION	20/02/2009
+PROTO   double  psf_chi2(psfstruct *psf, setstruct *set)
+PURPOSE Return the reduced chi2 of PSF-fitting.
+INPUT   Pointer to the PSF,
+        Pointer to the sample set.
+OUTPUT  Reduced chi2.
+NOTES   -.
+AUTHOR  E. Bertin (IAP)
+VERSION 20/02/2009
  ***/
-double	psf_chi2(psfstruct *psf, setstruct *set)
+double  psf_chi2(psfstruct *psf, setstruct *set)
   {
-   samplestruct	*sample;
-   double	chi2;
-   int		n, nsample;
+   samplestruct *sample;
+   double       chi2;
+   int          n, nsample;
 
 /* First compute residuals for each sample (chi^2) */
 //  NFPRINTF(OUTPUT,"Computing residuals...");
@@ -188,24 +193,24 @@ double	psf_chi2(psfstruct *psf, setstruct *set)
 
 
 /****** psf_clip **************************************************************
-PROTO	void	psf_clip(psfstruct *psf)
-PURPOSE	Apply soft-clipping to the PSF model using circular boundaries.
-INPUT	Pointer to the PSF.
-OUTPUT	-.
-NOTES	-.
-AUTHOR	E. Bertin (IAP)
-VERSION	12/11/2007
+PROTO   void    psf_clip(psfstruct *psf)
+PURPOSE Apply soft-clipping to the PSF model using circular boundaries.
+INPUT   Pointer to the PSF.
+OUTPUT  -.
+NOTES   -.
+AUTHOR  E. Bertin (IAP)
+VERSION 12/11/2007
  ***/
-void	psf_clip(psfstruct *psf)
+void    psf_clip(psfstruct *psf)
   {
-   double	xc,yc, x,y, r2,rmin2,rmax2,dr2;
-   float	*pix;
-   int		p, ix,iy, npsf;
+   double       xc,yc, x,y, r2,rmin2,rmax2,dr2;
+   float        *pix;
+   int          p, ix,iy, npsf;
 
   xc = (double)(psf->size[0]/2);
   yc = (double)(psf->size[1]/2);
   rmax2 = (psf->size[0]<psf->size[1]? (double)(psf->size[0]/2)
-				: (double)(psf->size[1]/2))+0.5;
+                                : (double)(psf->size[1]/2))+0.5;
   dr2 = (psf->fwhm / psf->pixstep);
   if (dr2<1.0)
     dr2 = 1.0;
@@ -239,32 +244,32 @@ void	psf_clip(psfstruct *psf)
 
 
 /****** psf_init **************************************************************
-PROTO	psfstruct *psf_init(contextstruct *context, int *size,
-			float psfstep, float *pixsize, int nsample)
-PURPOSE	Allocate and initialize a PSF structure.
-INPUT	Pointer to context structure,
-	PSF model image size (pixels),
-	PSF pixel step,
-	array of 2 effective pixel sizes (along x and along y),
-	number of samples.
+PROTO   psfstruct *psf_init(contextstruct *context, int *size,
+                        float psfstep, float *pixsize, int nsample)
+PURPOSE Allocate and initialize a PSF structure.
+INPUT   Pointer to context structure,
+        PSF model image size (pixels),
+        PSF pixel step,
+        array of 2 effective pixel sizes (along x and along y),
+        number of samples.
 OUTPUT  psfstruct pointer.
 NOTES   The maximum degrees and number of dimensions allowed are set in poly.h.
 AUTHOR  E. Bertin (IAP)
 VERSION 19/02/2013
  ***/
-psfstruct	*psf_init(contextstruct *context, int *size,
-			float psfstep, float *pixsize, int nsample)
+psfstruct       *psf_init(contextstruct *context, int *size,
+                        float psfstep, float *pixsize, int nsample)
   {
-   psfstruct	*psf;
-   static char	str[MAXCHAR];
-   char		**names2, **names2t;
-   double	psfelemdens;
-   int		*group2, *dim2,
-		d, ndim,ndim2,ngroup2, npix, nsnap;
+   psfstruct    *psf;
+   static char  str[MAXCHAR];
+   char         **names2, **names2t;
+   double       psfelemdens;
+   int          *group2, *dim2,
+                d, ndim,ndim2,ngroup2, npix, nsnap;
 
 /* Allocate memory for the PSF structure itself */
   QCALLOC(psf, psfstruct, 1);
-  psf->dim = PSF_NMASKDIM;	/* This is constant */
+  psf->dim = PSF_NMASKDIM;      /* This is constant */
   QMALLOC(psf->size, int, psf->dim);
 
 /* The polynom */
@@ -311,7 +316,7 @@ psfstruct	*psf_init(contextstruct *context, int *size,
         psf->poly = poly_init(group2, ndim2, dim2, ngroup2);
         }
       if (!ngroup2)
-        break;	/* No sample at all!*/
+        break;  /* No sample at all!*/
       }
 
   psf->pixstep = psfstep;
@@ -341,16 +346,16 @@ psfstruct	*psf_init(contextstruct *context, int *size,
       strcpy(psf->contextname[d], *(names2t++));
 /*---- Identify first spatial coordinates among contexts */
       if (!strcmp(psf->contextname[d], "X_IMAGE")
-		|| !strcmp(psf->contextname[d], "XWIN_IMAGE")
-		|| !strcmp(psf->contextname[d], "XPSF_IMAGE")
-		|| !strcmp(psf->contextname[d], "XMODEL_IMAGE")
-		|| !strcmp(psf->contextname[d], "XPEAK_IMAGE"))
+                || !strcmp(psf->contextname[d], "XWIN_IMAGE")
+                || !strcmp(psf->contextname[d], "XPSF_IMAGE")
+                || !strcmp(psf->contextname[d], "XMODEL_IMAGE")
+                || !strcmp(psf->contextname[d], "XPEAK_IMAGE"))
         psf->cx = d;
       else if (!strcmp(psf->contextname[d], "Y_IMAGE")
-		|| !strcmp(psf->contextname[d], "YWIN_IMAGE")
-		|| !strcmp(psf->contextname[d], "YPSF_IMAGE")
-		|| !strcmp(psf->contextname[d], "YMODEL_IMAGE")
-		|| !strcmp(psf->contextname[d], "YPEAK_IMAGE"))
+                || !strcmp(psf->contextname[d], "YWIN_IMAGE")
+                || !strcmp(psf->contextname[d], "YPSF_IMAGE")
+                || !strcmp(psf->contextname[d], "YMODEL_IMAGE")
+                || !strcmp(psf->contextname[d], "YPEAK_IMAGE"))
         psf->cy = d;
       }
     }
@@ -374,19 +379,19 @@ psfstruct	*psf_init(contextstruct *context, int *size,
 
 
 /****** psf_inherit ***********************************************************
-PROTO	psfstruct *psf_inherit(contextstruct *context, psfstruct *psf)
-PURPOSE	Initialize a PSF structure based on a preexisting PSF and a new context.
-INPUT	Pointer to context structure,
-	pointer to existing PSF.
+PROTO   psfstruct *psf_inherit(contextstruct *context, psfstruct *psf)
+PURPOSE Initialize a PSF structure based on a preexisting PSF and a new context.
+INPUT   Pointer to context structure,
+        pointer to existing PSF.
 OUTPUT  psfstruct pointer.
 NOTES   The maximum degrees and number of dimensions allowed are set in poly.h.
 AUTHOR  E. Bertin (IAP)
 VERSION 03/09/2009
  ***/
-psfstruct	*psf_inherit(contextstruct *context, psfstruct *psf)
+psfstruct       *psf_inherit(contextstruct *context, psfstruct *psf)
   {
-   psfstruct	*newpsf;
-   int		c,co, ncnew,ncold, npix;
+   psfstruct    *newpsf;
+   int          c,co, ncnew,ncold, npix;
 
 /* 10000 is just a dummy number */
   newpsf = psf_init(context, psf->size, psf->pixstep, psf->pixsize, 10000);
@@ -419,9 +424,9 @@ NOTES   -.
 AUTHOR  E. Bertin (IAP, Leiden observatory & ESO)
 VERSION 14/10/2009
  ***/
-void	psf_end(psfstruct *psf)
+void    psf_end(psfstruct *psf)
   {
-   int	d, ndim;
+   int  d, ndim;
 
   ndim = psf->poly->ndim;
   for (d=0; d<ndim; d++)
@@ -457,8 +462,8 @@ VERSION 25/09/2011
  ***/
 psfstruct *psf_copy(psfstruct *psf)
   {
-   psfstruct	*newpsf;
-   int		d, ndim,npix,nsnap;
+   psfstruct    *newpsf;
+   int          d, ndim,npix,nsnap;
 
   QMALLOC(newpsf, psfstruct, 1);
   *newpsf = *psf;
@@ -483,7 +488,7 @@ psfstruct *psf_copy(psfstruct *psf)
     QMEMCPY(psf->basis, newpsf->basis, float, psf->nbasis*npix);
   if (psf->basiscoeff)
     QMEMCPY(psf->basiscoeff, newpsf->basiscoeff, float,
-	psf->nbasis*psf->poly->ncoeff);
+        psf->nbasis*psf->poly->ncoeff);
   QMEMCPY(psf->comp, newpsf->comp, float, psf->npix);
   QMEMCPY(psf->loc, newpsf->loc, float, npix);
   QMEMCPY(psf->resi, newpsf->resi, float, npix);
@@ -505,24 +510,24 @@ psfstruct *psf_copy(psfstruct *psf)
 
 
 /****** psf_make **************************************************************
-PROTO	void	psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
-PURPOSE	Make the PSF.
-INPUT	Pointer to the PSF,
-	Pointer to the sample set,
-	PSF accuracy.
+PROTO   void    psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
+PURPOSE Make the PSF.
+INPUT   Pointer to the PSF,
+        Pointer to the sample set,
+        PSF accuracy.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 20/11/2012
  ***/
-void	psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
+void    psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
   {
-   polystruct	*poly;
-   samplestruct	*sample;
-   double	*pstack,*wstack, *basis, *pix,*wpix, *coeff, *pos, *post;
-   float	*comp,*image,*imaget, *weight,*weightt,
-		backnoise2, gain, norm, norm2, noise2, profaccu2, pixstep, val;
-   int		i,c,n, ncoeff,npix,nsample;
+   polystruct   *poly;
+   samplestruct *sample;
+   double       *pstack,*wstack, *basis, *pix,*wpix, *coeff, *pos, *post;
+   float        *comp,*image,*imaget, *weight,*weightt,
+                backnoise2, gain, norm, norm2, noise2, profaccu2, pixstep, val;
+   int          i,c,n, ncoeff,npix,nsample;
 
   poly = psf->poly;
 
@@ -559,20 +564,20 @@ void	psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
     imaget = image+n*npix;
     weightt = weight+n*npix;
     vignet_resample(sample->vig, set->vigsize[0], set->vigsize[1],
-	imaget, psf->size[0], psf->size[1],
-	sample->dx, sample->dy, psf->pixstep, pixstep);
+        imaget, psf->size[0], psf->size[1],
+        sample->dx, sample->dy, psf->pixstep, pixstep);
     for (i=npix; i--;)
       {
       val = (*(imaget++) /= norm);
       noise2 = backnoise2 + profaccu2*val*val;
       if (val>0.0 && gain>0.0)
         noise2 += val/gain;
-      *(weightt++) = norm2/noise2;      
+      *(weightt++) = norm2/noise2;
       }
 
     for (i=0; i<poly->ndim; i++)
       *(post++) = (sample->context[i]-set->contextoffset[i])
-		/set->contextscale[i];
+                /set->contextscale[i];
     }
 
 /* Make a polynomial fit to each pixel */
@@ -587,8 +592,8 @@ void	psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
       {
       *(pix++) = (double)*imaget;
       *(wpix++) = (double)*weightt;
-      imaget += npix; 
-      weightt += npix;     
+      imaget += npix;
+      weightt += npix;
       }
 
 /*-- Polynomial fitting */
@@ -611,20 +616,20 @@ void	psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
 
 
 /****** psf_build *************************************************************
-PROTO	void	psf_build(psfstruct *psf, double *pos)
-PURPOSE	Build the local PSF (function of "coordinates").
-INPUT	Pointer to the PSF,
-	Pointer to the (context) coordinates.
+PROTO   void    psf_build(psfstruct *psf, double *pos)
+PURPOSE Build the local PSF (function of "coordinates").
+INPUT   Pointer to the PSF,
+        Pointer to the (context) coordinates.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 02/04/2013
  ***/
-void	psf_build(psfstruct *psf, double *pos)
+void    psf_build(psfstruct *psf, double *pos)
   {
-   double	*basis;
-   float	*ppc, *pl, fac;
-   int		n,p, npix;
+   double       *basis;
+   float        *ppc, *pl, fac;
+   int          n,p, npix;
 
   npix = psf->size[0]*psf->size[1];
 /* Reset the Local PSF mask */
@@ -649,33 +654,33 @@ void	psf_build(psfstruct *psf, double *pos)
 
 
 /****** psf_makeresi **********************************************************
-PROTO	void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
-		double prof_accuracy)
-PURPOSE	Compute PSF residuals.
-INPUT	Pointer to the PSF,
-	Pointer to the sample set,
-	Re-centering flag (0=no),
-	PSF accuracy parameter.
+PROTO   void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
+                double prof_accuracy)
+PURPOSE Compute PSF residuals.
+INPUT   Pointer to the PSF,
+        Pointer to the sample set,
+        Re-centering flag (0=no),
+        PSF accuracy parameter.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 10/07/2012
  ***/
-void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
-		double prof_accuracy)
+void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
+                double prof_accuracy)
   {
-   samplestruct		*sample;
-   static double	pos[MAXCONTEXT], amat[9], bmat[3];
-   double		*dresi, *dresit, *amatt,
-			*cvigx,*cvigxt, *cvigy,*cvigyt,
-			nm1, chi2, dx,dy, ddx,ddy, dval,dvalx,dvaly,dwval,
-			radmin2,radmax2, hcw,hch, yb, mx2,my2,mxy,
-			xc,yc,rmax2,x,y, mse, xi2, xyi, resival, resinorm;
-   float		*vigresi, *vig, *vigw, *fresi,*fresit, *vigchi,
-			*cbasis,*cbasist, *cdata,*cdatat, *cvigw,*cvigwt,
-			norm, fval, vigstep, psf_extraccu2, wval, sval;
-   int			i,j,n,ix,iy, ndim,npix,nsample, cw,ch,ncpix, okflag,
-			accuflag, nchi2;
+   samplestruct         *sample;
+   static double        pos[MAXCONTEXT], amat[9], bmat[3];
+   double               *dresi, *dresit, *amatt,
+                        *cvigx,*cvigxt, *cvigy,*cvigyt,
+                        nm1, chi2, dx,dy, ddx,ddy, dval,dvalx,dvaly,dwval,
+                        radmin2,radmax2, hcw,hch, yb, mx2,my2,mxy,
+                        xc,yc,rmax2,x,y, mse, xi2, xyi, resival, resinorm;
+   float                *vigresi, *vig, *vigw, *fresi,*fresit, *vigchi,
+                        *cbasis,*cbasist, *cdata,*cdatat, *cvigw,*cvigwt,
+                        norm, fval, vigstep, psf_extraccu2, wval, sval;
+   int                  i,j,n,ix,iy, ndim,npix,nsample, cw,ch,ncpix, okflag,
+                        accuflag, nchi2;
 
   accuflag = (prof_accuracy > 1.0/BIG);
   vigstep = 1/psf->pixstep;
@@ -716,16 +721,16 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
     }
   else
     {
-    cvigx = cvigy = (double *)NULL;	/* To avoid gcc -Wall warnings */
-    cbasis = cdata = cvigw = (float *)NULL;	/* ditto */
-    cw = ch = ncpix = 0;			/* ibid */
+    cvigx = cvigy = (double *)NULL;     /* To avoid gcc -Wall warnings */
+    cbasis = cdata = cvigw = (float *)NULL;     /* ditto */
+    cw = ch = ncpix = 0;                        /* ibid */
     }
 
 /* Set convergence boundaries */
   radmin2 = PSF_MINSHIFT*PSF_MINSHIFT;
   radmax2 = PSF_MAXSHIFT*PSF_MAXSHIFT;
   okflag = nchi2 = 0;
-  mse = 0.0; 				/* To avoid gcc -Wall warnings */
+  mse = 0.0;                            /* To avoid gcc -Wall warnings */
 
 /* Compute the chi2 */
   for (n=0; n<nsample; n++)
@@ -734,7 +739,7 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
 /*-- Build the local PSF */
     for (i=0; i<ndim; i++)
       pos[i] = (sample->context[i]-set->contextoffset[i])
-		/set->contextscale[i];
+                /set->contextscale[i];
     psf_build(psf, pos);
 
 /*-- Delta-x and Delta-y in vignet-pixel units */
@@ -745,10 +750,10 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
       {
 /*---- Copy the data into the sub-vignet */
       vignet_copy(sample->vig, set->vigsize[0], set->vigsize[1],
-		cdata, cw,ch, 0,0, VIGNET_CPY);
+                cdata, cw,ch, 0,0, VIGNET_CPY);
 /*---- Weight the data */
       vignet_copy(sample->vigweight, set->vigsize[0], set->vigsize[1],
-		cvigw, cw,ch, 0,0, VIGNET_CPY);
+                cvigw, cw,ch, 0,0, VIGNET_CPY);
 
       for (cdatat=cdata, cvigwt=cvigw, i=ncpix; i--;)
         *(cdatat++) *= *(cvigwt++);
@@ -757,13 +762,13 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
         {
 /*------ Map the PSF model at the current position */
         vignet_resample(psf->loc, psf->size[0], psf->size[1],
-		cbasis, cw,ch, -dx*vigstep, -dy*vigstep, vigstep, 1.0);
+                cbasis, cw,ch, -dx*vigstep, -dy*vigstep, vigstep, 1.0);
 
 /*------ Build the a and b matrices */
         memset(amat, 0, 9*sizeof(double));
         bmat[0] = bmat[1] = bmat[2] = mx2=my2=mxy = 0.0;
         for (cvigxt=cvigx,cvigyt=cvigy,cvigwt=cvigw,
-		cbasist=cbasis,cdatat=cdata, i=ncpix; i--;)
+                cbasist=cbasis,cdatat=cdata, i=ncpix; i--;)
           {
           dval = (double)*(cbasist++);
           bmat[0] += (dwval = dval*(double)*(cdatat++));
@@ -788,20 +793,24 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
  #else
         if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',3,1,amat,3,bmat,3) != 0)
  #endif
+#elif defined(HAVE_CLAPACK)
+        integer one = 1, three = 3, info = 0;
+        dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
+        if (info != 0)
 #else
         if (clapack_dposv(CblasRowMajor,CblasUpper,3,1,amat,3,bmat,3) != 0)
 #endif
           warning("Not a positive definite matrix", " in PSF model solver");
 
 /*------ Convert to a shift */
-        dx += 0.5*(ddx = (bmat[1]*mx2 + bmat[2]*mxy) / bmat[0]); 
-        dy += 0.5*(ddy = (bmat[2]*my2 + bmat[1]*mxy) / bmat[0]); 
+        dx += 0.5*(ddx = (bmat[1]*mx2 + bmat[2]*mxy) / bmat[0]);
+        dy += 0.5*(ddy = (bmat[2]*my2 + bmat[1]*mxy) / bmat[0]);
 /*------ Exit if it converges or diverges */
         if (ddx*ddx+ddy*ddy < radmin2)
           {
           okflag = 1;
           break;
-	  }
+          }
         else if (dx*dx+dy*dy > radmax2)
           break;
         }
@@ -815,12 +824,12 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
 
 /*-- Map the PSF model at the current position */
     vignet_resample(psf->loc, psf->size[0], psf->size[1],
-	sample->vigresi, set->vigsize[0], set->vigsize[1],
-	-dx*vigstep, -dy*vigstep, vigstep, 1.0);
+        sample->vigresi, set->vigsize[0], set->vigsize[1],
+        -dx*vigstep, -dy*vigstep, vigstep, 1.0);
 /*-- Fit the flux */
     xi2 = xyi = 0.0;
     for (cvigwt=sample->vigweight,cbasist=sample->vigresi,cdatat=sample->vig,
-	i=npix; i--;)
+        i=npix; i--;)
       {
       dwval = *(cvigwt++);
       dval = (double)*(cbasist++);
@@ -838,7 +847,7 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
     yc = (double)(set->vigsize[1]/2)+sample->dy;
     y = -yc;
     rmax2 = psf->pixstep*(psf->size[0]<psf->size[1]?
-		(double)(psf->size[0]/2) : (double)(psf->size[1]/2));
+                (double)(psf->size[0]/2) : (double)(psf->size[1]/2));
     rmax2 *= rmax2;
     nchi2 = 0;
     vig = sample->vig;
@@ -850,7 +859,7 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
       x = -xc;
 #pragma ivdep
       for (ix=set->vigsize[0]; ix--; x+=1.0, vig++, vigresi++, dresit++,
-						vigchi++)
+                                                vigchi++)
         {
         *vigchi = 0;
         if ((wval=*(vigw++))>0.0)
@@ -879,14 +888,14 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
 /* Normalize and convert to floats the Residual array */
   mse = sqrt(mse/nsample/nchi2);
 /*printf("%g\n", mse);*/
-  QMALLOC(fresi, float, npix); 
+  QMALLOC(fresi, float, npix);
   nm1 = nsample > 1?  (double)(nsample - 1): 1.0;
   for (dresit=dresi,fresit=fresi, i=npix; i--;)
       *(fresit++) = sqrt(*(dresit++)/nm1);
 
 /*-- Map the residuals to PSF coordinates */
   vignet_resample(fresi, set->vigsize[0], set->vigsize[1],
-	psf->resi, psf->size[0], psf->size[1], 0.0,0.0, psf->pixstep, 1.0);
+        psf->resi, psf->size[0], psf->size[1], 0.0,0.0, psf->pixstep, 1.0);
 
 /* Free memory */
   free(dresi);
@@ -905,33 +914,33 @@ void	psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
 
 
 /****** psf_refine ************************************************************
-PROTO	int	psf_refine(psfstruct *psf, setstruct *set)
-PURPOSE	Refine PSF by solving a system to recover "aliased" components.
-INPUT	Pointer to the PSF,
-	Pointer to the sample set.
+PROTO   int     psf_refine(psfstruct *psf, setstruct *set)
+PURPOSE Refine PSF by solving a system to recover "aliased" components.
+INPUT   Pointer to the PSF,
+        Pointer to the sample set.
 OUTPUT  RETURN_OK if a PSF is succesfully computed, RETURN_ERROR otherwise.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 02/04/2013
  ***/
-int	psf_refine(psfstruct *psf, setstruct *set)
+int     psf_refine(psfstruct *psf, setstruct *set)
   {
-   polystruct		*poly;
-   samplestruct		*sample;
-   double		pos[MAXCONTEXT];
-   char			str[MAXCHAR];
-   double		*desmat,*desmatt,*desmatt2, *desmat0,*desmat02,
-			*bmat,*bmatt, *basis,*basist, *basist2,
-			*sigvig,*sigvigt, *alphamat,*alphamatt,
-			*betamat,*betamatt,*betamat2, *coeffmat,*coeffmatt,
-			dx,dy, dval, norm, tikfac;
-   float		*vig,*vigt,*vigt2, *wvig,
-			*vecvig,*vecvigt, *ppix, *vec, *bcoeff,
-			vigstep;
-   int			*desindex,*desindext,*desindext2,
-			*desindex0,*desindex02;
-   int			i,j,jo,k,l,c,n, npix,nvpix, ndata,ncoeff,nsample,npsf,
-			ncontext, nunknown, matoffset, dindex;
+   polystruct           *poly;
+   samplestruct         *sample;
+   double               pos[MAXCONTEXT];
+   char                 str[MAXCHAR];
+   double               *desmat,*desmatt,*desmatt2, *desmat0,*desmat02,
+                        *bmat,*bmatt, *basis,*basist, *basist2,
+                        *sigvig,*sigvigt, *alphamat,*alphamatt,
+                        *betamat,*betamatt,*betamat2, *coeffmat,*coeffmatt,
+                        dx,dy, dval, norm, tikfac;
+   float                *vig,*vigt,*vigt2, *wvig,
+                        *vecvig,*vecvigt, *ppix, *vec, *bcoeff,
+                        vigstep;
+   int                  *desindex,*desindext,*desindext2,
+                        *desindex0,*desindex02;
+   int                  i,j,jo,k,l,c,n, npix,nvpix, ndata,ncoeff,nsample,npsf,
+                        ncontext, nunknown, matoffset, dindex;
 
 /* Exit if no pixel is to be "refined" or if no sample is available */
   if (!set->nsample || !psf->basis)
@@ -953,7 +962,7 @@ int	psf_refine(psfstruct *psf, setstruct *set)
   QCALLOC(vecvig, float, nvpix);
 
 //  NFPRINTF(OUTPUT,"Processing samples...");
-  matoffset =nunknown-ncoeff;		/* Offset between matrix coeffs */
+  matoffset =nunknown-ncoeff;           /* Offset between matrix coeffs */
 /* Set-up the (compressed) design matrix and data vector */
   QCALLOC(desmat, double, npsf*ndata);
   QCALLOC(desindex, int, npsf*ndata);
@@ -984,7 +993,7 @@ int	psf_refine(psfstruct *psf, setstruct *set)
 /*-- Build the local PSF */
     for (i=0; i<ncontext; i++)
       pos[i] = (sample->context[i]-set->contextoffset[i])
-		/set->contextscale[i];
+                /set->contextscale[i];
     psf_build(psf, pos);
 
 /*-- Build the current context coefficient sub-matrix */
@@ -1004,7 +1013,7 @@ int	psf_refine(psfstruct *psf, setstruct *set)
       {
 /*---- Map the PSF model at the current position */
       vignet_resample(psf->loc, psf->size[0], psf->size[1],
-		vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
+                vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
 /*---- Subtract the PSF model */
       for (vigt=vig, vigt2=sample->vig, i=nvpix; i--; vigt++)
           *vigt = (float)(*(vigt2++) - *vigt*norm);
@@ -1017,10 +1026,10 @@ int	psf_refine(psfstruct *psf, setstruct *set)
       {
 /*---- Shift the current basis vector to the current PSF position */
       vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
-		vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+                vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
 /*---- Retrieve coefficient for each relevant data pixel */
       for (vecvigt=vecvig, sigvigt=sigvig,
-		desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;)
+                desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;)
         if (fabs(dval = *(vecvigt++) * *(sigvigt++)) > (1/BIG))
           {
           *(desmatt2++) = norm*dval;
@@ -1041,10 +1050,10 @@ int	psf_refine(psfstruct *psf, setstruct *set)
 /*-- Compute the matrix of normal equations */
     betamatt = betamat;
     for (desmat0=desmat, desindex0=desindex, k=0; k<npsf;
-		desmat0+=ndata, desindex0+=ndata, k++)
+                desmat0+=ndata, desindex0+=ndata, k++)
       {
       for (desmat02=desmat0, desindex02=desindex0, j=k; j<npsf;
-		desmat02+=ndata, desindex02+=ndata, j++)
+                desmat02+=ndata, desindex02+=ndata, j++)
         {
         dval = 0.0;
         desmatt=desmat0;
@@ -1112,14 +1121,18 @@ int	psf_refine(psfstruct *psf, setstruct *set)
 #if defined(HAVE_LAPACKE)
  #ifdef MATSTORAGE_PACKED
   if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,betamat,nunknown)
-	!= 0)
+        != 0)
  #else
   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,nunknown,
-	betamat,nunknown) != 0)
+        betamat,nunknown) != 0)
  #endif
+#elif defined(HAVE_CLAPACK)
+  integer one = 1, info = 0;
+  dposv_("L", &nunknown, &one, alphamat, &nunknown, betamat, &nunknown, &info);
+  if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,
-	betamat,nunknown) != 0)
+        betamat,nunknown) != 0)
 #endif
     warning("Not a positive definite matrix"," in PSF model refinement solver");
 
@@ -1139,7 +1152,7 @@ int	psf_refine(psfstruct *psf, setstruct *set)
     }
 
 //  NFPRINTF(OUTPUT,"Updating the PSF...");
-  bcoeff = NULL;		/* To avoid gcc -Wall warnings */
+  bcoeff = NULL;                /* To avoid gcc -Wall warnings */
   if (psf->basiscoeff)
     {
     free(psf->basiscoeff);
@@ -1179,9 +1192,9 @@ int	psf_refine(psfstruct *psf, setstruct *set)
 
 
 /****** psf_orthopoly *********************************************************
-PROTO	void	psf_orthopoly(psfstruct *psf)
-PURPOSE	Orthonormalize the polynomial basis over the range of possible contexts.
-INPUT	PSF structure.
+PROTO   void    psf_orthopoly(psfstruct *psf)
+PURPOSE Orthonormalize the polynomial basis over the range of possible contexts.
+INPUT   PSF structure.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
@@ -1189,12 +1202,12 @@ VERSION 02/04/2013
  ***/
 void psf_orthopoly(psfstruct *psf, setstruct *set)
   {
-   samplestruct	*sample;
-   polystruct	*poly;
-   double	pos[POLY_MAXDIM],
-		*basis, *data,*datat,
-		norm;
-   int		c,i,n, ndim, ncoeff, ndata;
+   samplestruct *sample;
+   polystruct   *poly;
+   double       pos[POLY_MAXDIM],
+                *basis, *data,*datat,
+                norm;
+   int          c,i,n, ndim, ncoeff, ndata;
 
   poly = psf->poly;
   ncoeff = poly->ncoeff;
@@ -1210,7 +1223,7 @@ void psf_orthopoly(psfstruct *psf, setstruct *set)
 /*-- Get the local context coordinates */
     for (i=0; i<ndim; i++)
       pos[i] = (sample->context[i]-set->contextoffset[i])
-		/set->contextscale[i];
+                /set->contextscale[i];
     poly_func(poly, pos);
     basis = poly->basis;
     datat = data + n;
@@ -1228,26 +1241,26 @@ void psf_orthopoly(psfstruct *psf, setstruct *set)
 
 
 /****** psf_makebasis *********************************************************
-PROTO	void	psf_makebasis(psfstruct *psf, setstruct *set,
-			basistypenum basis_type, int nvec)
-PURPOSE	Generate basis vectors for representing the PSF.
-INPUT	Pointer to the PSF,
-	Pointer to the sample set,
-	Basis type,
-	Basis number.
+PROTO   void    psf_makebasis(psfstruct *psf, setstruct *set,
+                        basistypenum basis_type, int nvec)
+PURPOSE Generate basis vectors for representing the PSF.
+INPUT   Pointer to the PSF,
+        Pointer to the sample set,
+        Basis type,
+        Basis number.
 OUTPUT  -.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 05/10/2010
  ***/
-void	psf_makebasis(psfstruct *psf, setstruct *set,
-			basistypenum basis_type, int nvec)
+void    psf_makebasis(psfstruct *psf, setstruct *set,
+                        basistypenum basis_type, int nvec)
   {
-  double	xc,yc, x,y, rmax2;
-  float		*psforder,*psfordert,*ppix,*basis,
-		psfthresh;
-  int		*psfmask,
-		i, ix,iy, ixmin,iymin,ixmax,iymax,irad, npsf,npix;
+  double        xc,yc, x,y, rmax2;
+  float         *psforder,*psfordert,*ppix,*basis,
+                psfthresh;
+  int           *psfmask,
+                i, ix,iy, ixmin,iymin,ixmax,iymax,irad, npsf,npix;
 
   npix = psf->size[0]*psf->size[1];
 
@@ -1262,7 +1275,7 @@ void	psf_makebasis(psfstruct *psf, setstruct *set,
         npsf=npix;
 /*---- First Select the brightest pixels */
 //      NFPRINTF(OUTPUT,"Selecting pixels...");
-      psforder = (float *)NULL;		/* To avoid gcc -Wall warnings */
+      psforder = (float *)NULL;         /* To avoid gcc -Wall warnings */
       QMEMCPY(psf->comp, psforder, float, npix);
       for (psfordert=psforder, i=npix; i--; psfordert++)
         *psfordert = fabs(*psfordert);
@@ -1285,7 +1298,7 @@ void	psf_makebasis(psfstruct *psf, setstruct *set,
       yc = (double)(psf->size[1]/2);
       y = -yc;
       rmax2 = (psf->size[0]<psf->size[1]? (double)(psf->size[0]/2)
-				: (double)(psf->size[1]/2))+0.5;
+                                : (double)(psf->size[1]/2))+0.5;
       rmax2 *= rmax2;
       for (iy=psf->size[1]; iy--; y+=1.0)
         {
@@ -1294,7 +1307,7 @@ void	psf_makebasis(psfstruct *psf, setstruct *set,
         if (iy>=iymin && iy<=iymax)
           for (ix=psf->size[0]; ix--; i++, x+=1.0)
             if (fabs(ppix[i])>=psfthresh && ix>=ixmin && ix<=ixmax
-		&& x*x+y*y<rmax2)
+                && x*x+y*y<rmax2)
               {
               npsf++;
               psfmask[i] = 1;
@@ -1314,19 +1327,19 @@ void	psf_makebasis(psfstruct *psf, setstruct *set,
 
 /*-- Size of the compressed design matrix along the "data" axis */
       psf->ndata = (1+(int)(INTERPW*psf->pixstep))
-		*(1+(int)(INTERPW*psf->pixstep))+1;
+                *(1+(int)(INTERPW*psf->pixstep))+1;
       break;
 
     case BASIS_GAUSS_LAGUERRE:
       psf->nbasis = psf_pshapelet(&psf->basis, psf->size[0],psf->size[1],
-		nvec, sqrt(nvec+1.0)*prefs.basis_scale);
+                nvec, sqrt(nvec+1.0)*prefs.basis_scale);
       break;
     case BASIS_FILE:
       psf->nbasis = psf_readbasis(psf, prefs.basis_name, 0);
       break;
     default:
       error(EXIT_FAILURE, "*Internal Error*: unknown PSF vector basis in ",
-			"psf_makebasis()");
+                        "psf_makebasis()");
     }
 
   return;
@@ -1334,20 +1347,20 @@ void	psf_makebasis(psfstruct *psf, setstruct *set,
 
 
 /****** psf_laguerre **********************************************************
-PROTO	double	psf_laguerre(double x, int p, int q)
-PURPOSE	Return Laguerre polynomial value.
-INPUT	x,
-	p,
-	q.
+PROTO   double  psf_laguerre(double x, int p, int q)
+PURPOSE Return Laguerre polynomial value.
+INPUT   x,
+        p,
+        q.
 OUTPUT  Value of the Laguerre polynomial.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 12/11/2007
  ***/
-static double	psf_laguerre(double x, int p, int q)
+static double   psf_laguerre(double x, int p, int q)
   {
-   double	dn,dq, lpm1,lpm2, l;
-   int		n;
+   double       dn,dq, lpm1,lpm2, l;
+   int          n;
 
   dq = q - 1.0;
   if (p==0)
@@ -1373,13 +1386,13 @@ static double	psf_laguerre(double x, int p, int q)
 
 
 /****** psf_pshapelet *********************************************************
-PROTO	int psf_pshapelet(float **shape, int w, int h, int nmax, double beta)
-PURPOSE	Compute Polar shapelet basis set.
-INPUT	Pointer to the array of image vectors (which will be allocated),
-	Image vector width,
-	Image vector height,
-	Shapelet n_max,
-	beta parameter.
+PROTO   int psf_pshapelet(float **shape, int w, int h, int nmax, double beta)
+PURPOSE Compute Polar shapelet basis set.
+INPUT   Pointer to the array of image vectors (which will be allocated),
+        Image vector width,
+        Image vector height,
+        Shapelet n_max,
+        beta parameter.
 OUTPUT  Total number of image vectors generated.
 NOTES   -.
 AUTHOR  E. Bertin (IAP)
@@ -1387,12 +1400,12 @@ VERSION 12/11/2007
  ***/
 int psf_pshapelet(float **basis, int w, int h, int nmax, double beta)
   {
-   char		str[128];
-   double	*fr2,*fr2t,*fexpr2,*fexpr2t,*ftheta,*fthetat,
-		dm,fac, xc,yc, x,y, x1,y1, r2,rmax2, invbeta2, val,
-		ostep,ostep2,odx;
-   float	*basist;
-   int		i,j,k, m,n,p, kmax,hnmm, ix,iy, idx,idy;
+   char         str[128];
+   double       *fr2,*fr2t,*fexpr2,*fexpr2t,*ftheta,*fthetat,
+                dm,fac, xc,yc, x,y, x1,y1, r2,rmax2, invbeta2, val,
+                ostep,ostep2,odx;
+   float        *basist;
+   int          i,j,k, m,n,p, kmax,hnmm, ix,iy, idx,idy;
 
   kmax = (nmax+1)*(nmax+2)/2;
 
@@ -1459,7 +1472,7 @@ int psf_pshapelet(float **basis, int w, int h, int nmax, double beta)
         val = 0.0;
         for (j=GAUSS_LAG_OSAMP*GAUSS_LAG_OSAMP; j--; fr2t++)
           val += fac*pow(*fr2t, dm/2.0)*psf_laguerre(*fr2t, hnmm, m)
-		**(fexpr2t++)*cos(dm**(fthetat++));
+                **(fexpr2t++)*cos(dm**(fthetat++));
         *(basist++) = val*ostep2;
         }
       if (m!=0)
@@ -1472,7 +1485,7 @@ int psf_pshapelet(float **basis, int w, int h, int nmax, double beta)
           val = 0.0;
           for (j=GAUSS_LAG_OSAMP*GAUSS_LAG_OSAMP; j--; fr2t++)
             val += fac*pow(*fr2t, dm/2.0)*psf_laguerre(*fr2t, hnmm, m)
-		**(fexpr2t++)*sin(dm**(fthetat++));
+                **(fexpr2t++)*sin(dm**(fthetat++));
           *(basist++) = val*ostep2;
           }
         k++;
@@ -1492,19 +1505,19 @@ int psf_pshapelet(float **basis, int w, int h, int nmax, double beta)
 PROTO   int psf_readbasis(psfstruct *psf, char *filename, int ext)
 PURPOSE Read a set of basis functions for the PSF from a 3D FITS-file.
 INPUT   Pointer to the PSF structure,
-	FITS filename,
-	Extension number.
+        FITS filename,
+        Extension number.
 OUTPUT  Number of basis vectors read.
 NOTES   The maximum degrees and number of dimensions allowed are set in poly.h.
 AUTHOR  E. Bertin (IAP)
 VERSION 13/11/2007
  ***/
-int	psf_readbasis(psfstruct *psf, char *filename, int ext)
+int     psf_readbasis(psfstruct *psf, char *filename, int ext)
   {
-   catstruct	*cat;
-   tabstruct	*tab, *firstab;
-   PIXTYPE	*pixin;
-   int		n, next, extp1, ntabp1, npixin,npixout,ncomp;
+   catstruct    *cat;
+   tabstruct    *tab, *firstab;
+   PIXTYPE      *pixin;
+   int          n, next, extp1, ntabp1, npixin,npixout,ncomp;
 
 /*-- Read input FITS file */
   if (!(cat = read_cat(filename)))
@@ -1527,7 +1540,7 @@ int	psf_readbasis(psfstruct *psf, char *filename, int ext)
       error(EXIT_FAILURE, "No image data in ", filename);
     if (next>extp1)
       warning("Not enough extensions, using only 1st datacube of ",
-		filename);
+                filename);
     }
 
   tab = tab->prevtab;
@@ -1541,8 +1554,8 @@ int	psf_readbasis(psfstruct *psf, char *filename, int ext)
     {
     read_body(tab, pixin, npixin);
     vignet_copy(pixin, tab->naxisn[0], tab->naxisn[1],
-		&psf->basis[n*npixout], psf->size[0], psf->size[1], 0, 0,
-		VIGNET_CPY);
+                &psf->basis[n*npixout], psf->size[0], psf->size[1], 0, 0,
+                VIGNET_CPY);
     }
   free(pixin);
   free_cat(&cat, 1);
