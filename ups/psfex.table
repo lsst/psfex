@@ -1,7 +1,7 @@
 if (type == build) {
     setupRequired(sconsUtils)
 }
-setupRequired(lapack)
+setupRequired(clapack)
 setupRequired(fftw)
 
 envPrepend(PATH, ${PRODUCT_DIR}/bin)

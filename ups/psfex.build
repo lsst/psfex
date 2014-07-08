@@ -6,7 +6,7 @@ product_dir=$(eups path 0)/$(eups flavor)/@PRODUCT@/@VERSION@ &&
     --prefix=$product_dir \
     --disable-threads \
     --with-fftw-incdir=$FFTW_DIR/include --with-fftw-libdir=$FFTW_DIR/lib \
-    --with-lapacke=$LAPACK_DIR &&
+    --with-clapack=$CLAPACK_DIR &&
 make &&
 make install &&
 setup -j -r . &&
