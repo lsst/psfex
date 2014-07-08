@@ -257,8 +257,10 @@ else
     LIBS="$LIBS -L${with_clapack}/lib"
     CFLAGS="$CFLAGS -I${with_clapack}/include"
     CPPFLAGS="$CPPFLAGS -I${with_clapack}/include"
-    AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]))
-    AC_CHECK_LIB([clapack], [dposv_],
+    AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]),
+    [#include <f2c.h>
+    ])
+    AC_CHECK_LIB([lapack], [dposv_],
                  [LIBS="$LIBS -llapack -lblas -lf2c -lm"],
                  AC_MSG_ERROR(["Can't find lapacke library"]),
                  [-llapack -lblas -lf2c -lm])
