@@ -1127,8 +1127,8 @@ int     psf_refine(psfstruct *psf, setstruct *set)
         betamat,nunknown) != 0)
  #endif
 #elif defined(HAVE_CLAPACK)
-  integer one = 1, info = 0;
-  dposv_("L", &nunknown, &one, alphamat, &nunknown, betamat, &nunknown, &info);
+  integer one = 1, info = 0, num = nunknown;
+  dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,

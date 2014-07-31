@@ -229,8 +229,8 @@ void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nfree,1,amat,nfree,bmat,nfree) != 0)
  #endif
 #elif defined(HAVE_CLAPACK)
-  integer one = 1, info = 0;
-  dposv_("L", &nfree, &one, amat, &nfree, bmat, &nfree, &info);
+  integer one = 1, info = 0, num = nfree;
+  dposv_("L", &num, &one, amat, &num, bmat, &num, &info);
   if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nfree,1,amat,nfree,bmat,nfree)!=0)
