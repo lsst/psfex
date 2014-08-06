@@ -518,8 +518,8 @@ int     poly_solve(double *a, double *b, int n)
 #elif defined(HAVE_ATLAS)
   return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
 #elif defined(HAVE_CLAPACK)
-  integer one = 1, info = 0;
-  dposv_("L", &n, &one, a, &n, b, &n, &info);
+  integer one = 1, info = 0, num = n;
+  dposv_("L", &num, &one, a, &num, b, &num, &info);
   return info;
 #else
   return cholsolve(a,b,n);
@@ -736,8 +736,8 @@ void    poly_initortho(polystruct *poly, double *data, int ndata)
   clapack_dtrtri(CblasRowMajor, CblasLower, CblasNonUnit, ncoeff,
         poly->orthomat, ncoeff);
 #elif defined(HAVE_CLAPACK)
-  integer info = 0;
-  dtrtri_("L", "N", &ncoeff, &poly->orthomat, &ncoeff, &info);
+  integer info = 0, num = ncoeff;
+  dtrtri_("L", "N", &num, poly->orthomat, &num, &info);
 #else
   qerror("*Internal Error*: no routine available", " for triangular inverse");
 #endif
