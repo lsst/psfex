@@ -398,11 +398,15 @@ makeit_body(
         psf->chi2 = set2->nsample? psf_chi2(psf, set2) : 0.0;
         }
       psf->samples_accepted = set2->nsample;
+
 /*---- Compute diagnostics and field statistics */
+/*---- Do not compute these*/
+#if 0
       psf_diagnostic(psf);
       psf_wcsdiagnostic(psf, wcs);
       nmed = psf->nmed;
       field_stats(fields, set2);
+#endif
 /*---- Display stats for current catalog/extension */
       if (next>1)
         sprintf(str, "[%d/%d]", ext+1, next);
