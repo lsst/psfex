@@ -216,6 +216,8 @@ samplestruct	*remove_sample(setstruct *set, int isample)
   if (nsample>0)
     {
     sample = set->sample[isample];
+/* Set the object index to -1 so we know that it has been rejected */
+    sample->objindex = -1;
     exsample = *set->sample[nsample];
     *set->sample[nsample] = *sample;
     *sample = exsample;

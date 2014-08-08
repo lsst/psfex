@@ -731,6 +731,7 @@ setstruct *read_samples(setstruct *set, char *filename,
     sample = set->sample[nsample];
     sample->catindex = catindex;
     sample->extindex = ext;
+    sample->objindex = n;
 
 /*-- Copy the vignet to the training set */
     memcpy(sample->vig, vignet, vigsize*sizeof(float));

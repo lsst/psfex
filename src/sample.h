@@ -48,6 +48,7 @@ typedef struct sample
   {
   int		catindex;		/* Catalogue index */
   int		extindex;		/* Extension index */
+  int		objindex;		/* Object index */
   float		*vig;			/* Vignette array */
   float		*vigresi;		/* Residual-map of the PSF-residuals */
   float		*vigchi;		/* Chi-map of the PSF-residuals */

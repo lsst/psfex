@@ -363,7 +363,9 @@ makeit_body(
   else if (psfbasis)
     free(psfbasis);
 
+/* Do not compute these */
 /* Compute diagnostics and check-images */
+#if 0
 #ifdef USE_THREADS
 /* Force MKL using a single thread as diagnostic code is already multithreaded*/ 
  #ifdef HAVE_MKL
@@ -400,13 +402,11 @@ makeit_body(
       psf->samples_accepted = set2->nsample;
 
 /*---- Compute diagnostics and field statistics */
-/*---- Do not compute these*/
-#if 0
       psf_diagnostic(psf);
       psf_wcsdiagnostic(psf, wcs);
       nmed = psf->nmed;
       field_stats(fields, set2);
-#endif
+
 /*---- Display stats for current catalog/extension */
       if (next>1)
         sprintf(str, "[%d/%d]", ext+1, next);
@@ -438,6 +438,7 @@ makeit_body(
     }
 
 #ifdef USE_THREADS
+#endif
 /* Back to multithreaded MKL */
  #ifdef HAVE_MKL
    mkl_set_num_threads(prefs.nthreads);
@@ -475,7 +476,7 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
 
   psf->samples_loaded = set->nsample;
   psf->fwhm = set->fwhm;
-  
+
 /* Make the basic PSF-model (1st pass) */
 //  NFPRINTF(OUTPUT,"Modeling the PSF (1/3)...");
   psf_make(psf, set, 0.2);
@@ -498,39 +499,48 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
   if (set->nsample>1)
     {
     psf_clean(psf, set, 0.2);
- 
+
 /*-- Make the basic PSF-model (2nd pass) */
 //    NFPRINTF(OUTPUT,"Modeling the PSF (2/3)...");
     psf_make(psf, set, 0.1);
     psf_refine(psf, set);
     }
- 
+
 /* Remove bad PSF candidates */
   if (set->nsample>1)
     {
     psf_clean(psf, set, 0.1);
- 
+
 /*-- Make the basic PSF-model (3rd pass) */
 //    NFPRINTF(OUTPUT,"Modeling the PSF (3/3)...");
     psf_make(psf, set, 0.05);
     psf_refine(psf, set);
     }
- 
+
 /* Remove bad PSF candidates */
   if (set->nsample>1)
     psf_clean(psf, set, 0.05);
- 
+
   psf->samples_accepted = set->nsample;
- 
+
 /* Refine the PSF-model */
   psf_make(psf, set, prefs.prof_accuracy);
   psf_refine(psf, set);
- 
+
+
+
 /* Clip the PSF-model */
   psf_clip(psf);
 
+/* Refine the PSF-model one more time after psf_clip is called */
+/* This was added because we no longer run psf_clean in the diagnostics */
+  psf_clean(psf, set, prefs.prof_accuracy);
+  psf_refine(psf, set);
+
+  
 /*-- Just check the Chi2 */
   psf->chi2 = set->nsample? psf_chi2(psf, set) : 0.0;
 
+  
   return psf;
   }
