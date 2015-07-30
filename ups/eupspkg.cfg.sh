@@ -1,29 +1,33 @@
 
-config(){
+config()
+{
 	cd lapack_functions
 	scons -Q
 	cd ../
 
-	options=''
-	options=$options"--prefix=$PREFIX "
-	options=$options"--disable-threads "
-	options=$options"--with-clapack=$PSFEX_DIR/lapack_functions "
+	options="--prefix=$PREFIX --disable-threads --with-clapack=$PSFEX_DIR/lapack_functions "
+	# The following if statement allows the package to be built if
+	# someone chooses to use their system libraries for fftw in place of
+	# the package provided through eups. It checks if the eups fftw
+	# environment variable is set, and if it is the configuration is
+	# set appropriately.
 	if [ "$FFTW_DIR" ]; then
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
 	fi
-	#echo $options
-	pwd
 	./configure $options
 }
 
-build(){
-	make CFLAGS=-g
-	scons opt=3 prefix=$PREFIX version=$VERSION
+build()
+{
+	make 
+	scons prefix=$PREFIX version=$VERSION
 }
 
-install(){
+install()
+{
+	clean_old_install
 	make install
-	scons opt=3 install prefix=$PREFIX version=$VERSION
+	scons install prefix=$PREFIX version=$VERSION
 }
 
