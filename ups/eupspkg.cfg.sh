@@ -1,13 +1,13 @@
 
 config(){
-	cd hack_clapack
+	cd lapack_functions
 	scons -Q
 	cd ../
 
 	options=''
 	options=$options"--prefix=$PREFIX "
 	options=$options"--disable-threads "
-	options=$options"--with-clapack=$PSFEX_DIR/hack_clapack "
+	options=$options"--with-clapack=$PSFEX_DIR/lapack_functions "
 	if [ "$FFTW_DIR" ]; then
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "

@@ -18,5 +18,3 @@ libs = env.getLibs("self")+['lapack']
 libs_dir = [Dir('.').abspath,os.path.join(os.environ['FFTW_DIR'],'lib'),'/usr/include/','/usr/local/include']
 targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBPATH=libs_dir,LIBS=libs ))
 
-#LIBS=env.getLibs("self")+['clapack']
-#LIBPATH=os.path.join(os.path.normpath(os.getcwd()    ),'../hack_clapack/lib')
