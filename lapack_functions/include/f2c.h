@@ -1,3 +1,9 @@
+/*
+ These compiler directives are used to control various types that may be
+ encountered in PSFEx code, they are reproduced here, a subset of a complete
+ f2c.h, to ensure the stub of lapack which we re-implemented will function
+ correctly with the existing PSFEx code
+*/
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
