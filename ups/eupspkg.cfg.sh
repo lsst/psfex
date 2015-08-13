@@ -4,7 +4,9 @@ config()
 	cd lapack_functions
 	scons -Q
 	cd ../
-
+	if [ -z $PSFEX_DIR ]; then
+		PSFEX_DIR=$(pwd)
+	fi
 	options="--prefix=$PREFIX --disable-threads --with-clapack=$PSFEX_DIR/lapack_functions "
 	# The following if statement allows the package to be built if
 	# someone chooses to use their system libraries for fftw in place of
