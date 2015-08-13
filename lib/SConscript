@@ -11,14 +11,8 @@ sourceFiles = ["context.c", "field.c", "field_utils.c", "misc.c", "wcs/poly.c", 
 
 levmarSourceFiles = ["Axb.c", "lmbc.c", "lm.c", "lmblec.c", "lmbleic.c", "lmlec.c", "misc.c"]
 
-print(env.getLibs("self"))
 objs = env.SourcesForSharedLibrary([os.path.join("#src", f) for f in
                                     sourceFiles + [os.path.join("levmar", f) for f in levmarSourceFiles]])
 libs = env.getLibs("self")+['lapack']
-if len(os.environ['PSFEX_DIR']) == 0:
-	psfexdir = os.path.normpath(os.path.join(os.path.join(os.getcwd(),'../'),'lapack_functions/lib')
-else:
-	psfexdir = os.path.join(os.environ['PSFEX_DIR'],'lapack_functions/lib')
-libs_dir = [Dir('.').abspath,os.path.join(os.environ['FFTW_DIR'],'lib'),psfexdir,'/usr/include/','/usr/local/include']
-targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBPATH=libs_dir,LIBS=libs ))
+targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBS=libs ))#,LIBPATH=libs_dir))#,LIBS=libs ))
 

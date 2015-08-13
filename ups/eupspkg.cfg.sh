@@ -1,9 +1,14 @@
 
 config()
 {
+	function finish {
+		cat config.log
+  	}
+  	trap finish EXIT
 	cd lapack_functions
 	scons -Q
 	cd ../
+	cp lapack_functions/lib/*lapack* lib/
 	if [ -z $PSFEX_DIR ]; then
 		PSFEX_DIR=$(pwd)
 	fi
