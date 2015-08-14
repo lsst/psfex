@@ -261,9 +261,10 @@ else
     [#include <f2c.h>
     ])
     AC_CHECK_LIB([lapack], [dposv_],
-                 [LIBS="$LIBS -llapack -lblas -lf2c -lm"],
+                 [LIBS="$LIBS -llapack -lf2c -lm"],
                  AC_MSG_ERROR(["Can't find lapacke library"]),
-                 [-llapack -lblas -lf2c -lm])
+                 #[-llapack -lblas -lf2c -lm])
+                 [-llapack -lf2c -lm])
     AC_DEFINE(HAVE_CLAPACK,1, [Define if you have the CLAPACK libraries.])
     AC_DEFINE_UNQUOTED(CLAPACK_H, "clapack.h", [CLAPACK header filename.])
 ################ handle the LAPACKe library (linear algebra) #################
