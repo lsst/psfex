@@ -10,3 +10,4 @@ lib_path = os.environ['LD_LIBRARY_PATH'].split(':')
 env['CPPPATH'] = [os.path.join(os.environ['GSL_DIR'], 'include'), '/usr/include', '/usr/local/include']
 env.SharedLibrary(target=target, source=source, LIBS=libs, LIBPATH=lib_path)
 env.SharedLibrary(target='lib/f2c', source=['src/f2c.c'])
+env.SharedLibrary(target='lib/blas',source=['src/blas.c'])
