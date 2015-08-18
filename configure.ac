@@ -35,6 +35,7 @@ AC_INIT(psfex, 3.15.2, [bertin@iap.fr])
 AC_CONFIG_SRCDIR(src/makeit.c)
 AC_CONFIG_AUX_DIR(autoconf)
 AC_CONFIG_HEADERS(config.h)
+AM_MAINTAINER_MODE([disable])
 AM_INIT_AUTOMAKE
 date=`date +%Y-%m-%d`
 date2=`date +"%a %b %d %Y"`
@@ -260,11 +261,10 @@ else
     AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]),
     [#include <f2c.h>
     ])
-    AC_CHECK_LIB([lapack], [dposv_],
-                 [LIBS="$LIBS -llapack -lf2c -lm"],
+    AC_CHECK_LIB([lapackstub], [dposv_],
+                 [LIBS="$LIBS -llapackstub -lf2c -lm"],
                  AC_MSG_ERROR(["Can't find lapacke library"]),
-                 #[-llapack -lblas -lf2c -lm])
-                 [-llapack -lf2c -lm])
+                 [-llapackstub -lf2c -lm])
     AC_DEFINE(HAVE_CLAPACK,1, [Define if you have the CLAPACK libraries.])
     AC_DEFINE_UNQUOTED(CLAPACK_H, "clapack.h", [CLAPACK header filename.])
 ################ handle the LAPACKe library (linear algebra) #################

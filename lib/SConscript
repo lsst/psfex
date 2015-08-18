@@ -13,6 +13,6 @@ levmarSourceFiles = ["Axb.c", "lmbc.c", "lm.c", "lmblec.c", "lmbleic.c", "lmlec.
 
 objs = env.SourcesForSharedLibrary([os.path.join("#src", f) for f in
                                     sourceFiles + [os.path.join("levmar", f) for f in levmarSourceFiles]])
-libs = env.getLibs("self")+['lapack']
+libs = env.getLibs("self")+['lapackstub']
 targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBS=libs ))#,LIBPATH=libs_dir))#,LIBS=libs ))
 
