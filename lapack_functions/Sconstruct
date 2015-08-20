@@ -2,7 +2,7 @@
 import os
 env = Environment()
 
-target = "lib/lapack"
+target = "lib/lapackstub"
 source = ["src/clapack.c"]
 libs = ['gsl', 'gslcblas']
 lib_path = os.environ['LD_LIBRARY_PATH'].split(':')
