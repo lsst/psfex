@@ -13,6 +13,7 @@ config()
 		PSFEX_DIR=$(pwd)
 	fi
 	options="--prefix=$PREFIX --disable-threads --with-clapack=$PSFEX_DIR/lapack_functions "
+	options=$options"--enable-plplot=no "
 	# The following if statement allows the package to be built if
 	# someone chooses to use their system libraries for fftw in place of
 	# the package provided through eups. It checks if the eups fftw
