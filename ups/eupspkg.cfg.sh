@@ -6,7 +6,10 @@ config()
   	}
   	trap finish EXIT
 	cd lapack_functions
-	scons -Q
+	# Run the lapack_functions build script. This is a wrapper
+	# around scons which checks and removes any sconsflags which
+	# may be set but which break the build
+	python build.py
 	cd ../
 	cp lapack_functions/lib/*lapack* lib/
 	if [ -z $PSFEX_DIR ]; then
