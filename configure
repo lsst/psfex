@@ -807,6 +807,7 @@ with_fftw_libdir
 with_fftw_incdir
 with_mkl_dir
 with_clapack
+with_lapack_stub
 with_lapacke
 with_xsl_url
 enable_threads
@@ -1500,6 +1501,7 @@ Optional Packages:
   --with-mkl-dir=<MKL path>
                           Provide an alternative path to the MKL library
   --with-clapack          Provide path to CLAPACK
+  --with-lapack-stub      Use built-in stub LAPACK
   --with-lapacke          Provide path to LAPACKE
   --with-xsl_url=<default URL for XSLT filter>
                           Provide an alternative default URL of the XSLT
@@ -12637,18 +12639,18 @@ else
 /* end confdefs.h.  */
 
   /* For now, do not test the preprocessor; as of 2007 there are too many
-	 implementations with broken preprocessors.  Perhaps this can
-	 be revisited in 2012.  In the meantime, code should not expect
-	 #if to work with literals wider than 32 bits.  */
+         implementations with broken preprocessors.  Perhaps this can
+         be revisited in 2012.  In the meantime, code should not expect
+         #if to work with literals wider than 32 bits.  */
       /* Test literals.  */
       long long int ll = 9223372036854775807ll;
       long long int nll = -9223372036854775807LL;
       unsigned long long int ull = 18446744073709551615ULL;
       /* Test constant expressions.   */
       typedef int a[((-9223372036854775807LL < 0 && 0 < 9223372036854775807ll)
-		     ? 1 : -1)];
+                     ? 1 : -1)];
       typedef int b[(18446744073709551615ULL <= (unsigned long long int) -1
-		     ? 1 : -1)];
+                     ? 1 : -1)];
       int i = 63;
 int
 main ()
@@ -12657,9 +12659,9 @@ main ()
       long long int llmax = 9223372036854775807ll;
       unsigned long long int ullmax = 18446744073709551615ull;
       return ((ll << 63) | (ll >> 63) | (ll < i) | (ll > i)
-	      | (llmax / ll) | (llmax % ll)
-	      | (ull << 63) | (ull >> 63) | (ull << i) | (ull >> i)
-	      | (ullmax / ull) | (ullmax % ull));
+              | (llmax / ll) | (llmax % ll)
+              | (ull << 63) | (ull >> 63) | (ull << i) | (ull >> i)
+              | (ullmax / ull) | (ullmax % ull));
   ;
   return 0;
 }
@@ -12691,33 +12693,33 @@ if ${ac_cv_type_long_long_int+:} false; then :
 else
   ac_cv_type_long_long_int=yes
       if test "x${ac_cv_prog_cc_c99-no}" = xno; then
-	ac_cv_type_long_long_int=$ac_cv_type_unsigned_long_long_int
-	if test $ac_cv_type_long_long_int = yes; then
-	  	  	  	  if test "$cross_compiling" = yes; then :
+        ac_cv_type_long_long_int=$ac_cv_type_unsigned_long_long_int
+        if test $ac_cv_type_long_long_int = yes; then
+                                        if test "$cross_compiling" = yes; then :
   :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <limits.h>
-		 #ifndef LLONG_MAX
-		 # define HALF \
-			  (1LL << (sizeof (long long int) * CHAR_BIT - 2))
-		 # define LLONG_MAX (HALF - 1 + HALF)
-		 #endif
+                 #ifndef LLONG_MAX
+                 # define HALF \
+                          (1LL << (sizeof (long long int) * CHAR_BIT - 2))
+                 # define LLONG_MAX (HALF - 1 + HALF)
+                 #endif
 int
 main ()
 {
 long long int n = 1;
-		 int i;
-		 for (i = 0; ; i++)
-		   {
-		     long long int m = n << i;
-		     if (m >> i != n)
-		       return 1;
-		     if (LLONG_MAX / 2 < m)
-		       break;
-		   }
-		 return 0;
+                 int i;
+                 for (i = 0; ; i++)
+                   {
+                     long long int m = n << i;
+                     if (m >> i != n)
+                       return 1;
+                     if (LLONG_MAX / 2 < m)
+                       break;
+                   }
+                 return 0;
   ;
   return 0;
 }
@@ -12731,7 +12733,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-	fi
+        fi
       fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_long_long_int" >&5
@@ -12754,18 +12756,18 @@ else
 /* end confdefs.h.  */
 
   /* For now, do not test the preprocessor; as of 2007 there are too many
-	 implementations with broken preprocessors.  Perhaps this can
-	 be revisited in 2012.  In the meantime, code should not expect
-	 #if to work with literals wider than 32 bits.  */
+         implementations with broken preprocessors.  Perhaps this can
+         be revisited in 2012.  In the meantime, code should not expect
+         #if to work with literals wider than 32 bits.  */
       /* Test literals.  */
       long long int ll = 9223372036854775807ll;
       long long int nll = -9223372036854775807LL;
       unsigned long long int ull = 18446744073709551615ULL;
       /* Test constant expressions.   */
       typedef int a[((-9223372036854775807LL < 0 && 0 < 9223372036854775807ll)
-		     ? 1 : -1)];
+                     ? 1 : -1)];
       typedef int b[(18446744073709551615ULL <= (unsigned long long int) -1
-		     ? 1 : -1)];
+                     ? 1 : -1)];
       int i = 63;
 int
 main ()
@@ -12774,9 +12776,9 @@ main ()
       long long int llmax = 9223372036854775807ll;
       unsigned long long int ullmax = 18446744073709551615ull;
       return ((ll << 63) | (ll >> 63) | (ll < i) | (ll > i)
-	      | (llmax / ll) | (llmax % ll)
-	      | (ull << 63) | (ull >> 63) | (ull << i) | (ull >> i)
-	      | (ullmax / ull) | (ullmax % ull));
+              | (llmax / ll) | (llmax % ll)
+              | (ull << 63) | (ull >> 63) | (ull << i) | (ull >> i)
+              | (ullmax / ull) | (ullmax % ull));
   ;
   return 0;
 }
@@ -13665,6 +13667,13 @@ fi
 # Check whether --with-clapack was given.
 if test "${with_clapack+set}" = set; then :
   withval=$with_clapack;
+fi
+
+
+
+# Check whether --with-lapack-stub was given.
+if test "${with_lapack_stub+set}" = set; then :
+  withval=$with_lapack_stub;
 fi
 
 
@@ -15004,7 +15013,7 @@ $as_echo "$ac_cv_lib_lapackstub_dposv_" >&6; }
 if test "x$ac_cv_lib_lapackstub_dposv_" = xyes; then :
   LIBS="$LIBS -llapackstub -lf2c -lm"
 else
-  as_fn_error $? "\"Can't find lapacke library\"" "$LINENO" 5
+  as_fn_error $? "\"Can't find clapack library\"" "$LINENO" 5
 fi
 
 
@@ -15082,6 +15091,21 @@ $as_echo "#define HAVE_LAPACKE 1" >>confdefs.h
 
 cat >>confdefs.h <<_ACEOF
 #define LAPACKE_H "lapacke.h"
+_ACEOF
+
+################ handle the built-in lapack stub (linear algebra) #################
+  elif test "x$with_lapack_stub" != "x"; then
+
+$as_echo "#define HAVE_LAPACK_STUB 1" >>confdefs.h
+
+
+cat >>confdefs.h <<_ACEOF
+#define LAPACK_STUB_H "lapack_stub.h"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define F2C_H "f2c.h"
 _ACEOF
 
   else
