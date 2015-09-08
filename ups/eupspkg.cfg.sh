@@ -16,19 +16,17 @@ config()
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
 	fi
-	CFLAGS=${CFLAGS}" -I${GSL_DIR}/include" LDFLAGS=${LDFLAGS}" -L${GSL_DIR}"/lib LIBS=${LIBS}" -lgslcblas -lgsl" ./configure $options
+	./configure ${options}
 }
 
 build()
 {
-	make
 	scons prefix=$PREFIX version=$VERSION
 }
 
 install()
 {
 	clean_old_install
-	make install
 	scons install prefix=$PREFIX version=$VERSION
 }
 
