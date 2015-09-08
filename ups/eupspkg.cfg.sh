@@ -4,15 +4,8 @@ config()
 	function finish {
 		cat config.log
   	}
-  	trap finish EXIT
-	cd lapack_functions
-	scons -Q
-	cd ../
-	cp lapack_functions/lib/*lapack* lib/
-	if [ -z $PSFEX_DIR ]; then
-		PSFEX_DIR=$(pwd)
-	fi
-	options="--prefix=$PREFIX --disable-threads --with-clapack=$PSFEX_DIR/lapack_functions "
+ 	trap finish EXIT
+	options="--prefix=$PREFIX --disable-threads --with-lapack-stub "
 	options=$options"--enable-plplot=no "
 	# The following if statement allows the package to be built if
 	# someone chooses to use their system libraries for fftw in place of
@@ -23,12 +16,12 @@ config()
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
 	fi
-	./configure $options
+	CFLAGS=${CFLAGS}" -I${GSL_DIR}/include" LDFLAGS=${LDFLAGS}" -L${GSL_DIR}"/lib LIBS=${LIBS}" -lgslcblas -lgsl" ./configure $options
 }
 
 build()
 {
-	make 
+	make
 	scons prefix=$PREFIX version=$VERSION
 }
 

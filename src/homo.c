@@ -61,6 +61,11 @@
 #include CLAPACK_H
 #endif
 
+#ifdef HAVE_LAPACK_STUB
+#include F2C_H
+#include LAPACK_STUB_H
+#endif
+
 /****** psf_homo *******************************************************
 PROTO   void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
                 int homobasis_number, double homobasis_scale,
@@ -228,7 +233,7 @@ void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
  #else
   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nfree,1,amat,nfree,bmat,nfree) != 0)
  #endif
-#elif defined(HAVE_CLAPACK)
+#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nfree;
   dposv_("L", &num, &one, amat, &num, bmat, &num, &info);
   if (info != 0)
