@@ -147,19 +147,19 @@ void dtrtri_(char *UPLO, char *DIAG, long *N, double *A, long *LDA, long *info)
 	gsl_vector *temp = gsl_vector_calloc(*LDA**LDA);
 	gsl_vector_view view;
 
-	// Check if the upper or lower triangle is to be inverted
-	// these blocks define some conditions that will always be true in
-	// these circumstances. Such as the start or ending position of
-	// copying the inverted row into origional matrix.
-	// Finally we need to set if the matrix should be inverted for the
+	// Check if the upper or lower triangle is to be inverted: these blocks
+	// define some conditions that will always be true in these circumstances,
+	// such as the start or ending position of copying the inverted row into
+	// origional matrix. We also set if the matrix should be inverted for the
 	// solution or not.
 	if (*UPLO == 'L')
 	{
-		start = 0;
+		start = end = 0;
 		transa = CblasNoTrans;
 	}
 	else
 	{
+		start = 1;
 		end = *LDA;
 		transa = CblasTrans;
 	}
