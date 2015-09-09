@@ -2,7 +2,7 @@
  This code reproduces two of the functions of lapack with an implementation
  using gsl. This allows the use of these functions without the need to link to
  any fortran code. For compatibility, all of the same arguments are taken, but
- some of the arguments may not be used. For instance dposv takes an argument U
+ some of the arguments may not be used. For instance dposv_ takes an argument U
  or L but will actually return the full solution, not simply the upper or
  lower part.
 */
@@ -10,9 +10,6 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
-
-//extern void dposv() asm ("dposv_");
-//extern void dtrtri() asm ("dtrtri_");
 
 void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, long *LDB, long *info)
 {
@@ -72,8 +69,8 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
                   puted.
 
          */
-	gsl_matrix_view m = gsl_matrix_view_array(A,*LDA,*N);
-	gsl_vector_view b = gsl_vector_view_array(B,*LDB);
+	gsl_matrix_view m = gsl_matrix_view_array(A, *LDA, *N);
+	gsl_vector_view b = gsl_vector_view_array(B, *LDB);
 
 	*info = gsl_linalg_cholesky_decomp(&m.matrix);
 	if (*info != 0)
@@ -92,7 +89,7 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
 }
 
 
-void dtrtri_(char *UPLO, char *DIAG, long * N, double * A, long * LDA, long * info)
+void dtrtri_(char *UPLO, char *DIAG, long *N, double *A, long *LDA, long *info)
 {
         /*
         Note:
@@ -145,20 +142,20 @@ void dtrtri_(char *UPLO, char *DIAG, long * N, double * A, long * LDA, long * in
 
           */
 	CBLAS_TRANSPOSE_t transa;
-	long start,end,i,j;
-	gsl_matrix_view m = gsl_matrix_view_array(A,*LDA,*N);
-	gsl_vector * temp = gsl_vector_calloc(*LDA**LDA);
+	long start, end, i, j;
+	gsl_matrix_view m = gsl_matrix_view_array(A, *LDA, *N);
+	gsl_vector *temp = gsl_vector_calloc(*LDA**LDA);
 	gsl_vector_view view;
 
-	//check if the upper or lower triangle is to be inverted
-	//these blocks define some conditions that will always be true in
-	//these circumstances. Such as the start or ending position of
-	//copying the inverted row into origional matrix.
-	//Finally we need to set if the matrix should be inverted for the
-	//solution or not.
-	if(*UPLO == 'L')
+	// Check if the upper or lower triangle is to be inverted
+	// these blocks define some conditions that will always be true in
+	// these circumstances. Such as the start or ending position of
+	// copying the inverted row into origional matrix.
+	// Finally we need to set if the matrix should be inverted for the
+	// solution or not.
+	if (*UPLO == 'L')
 	{
-		start  = 0;
+		start = 0;
 		transa = CblasNoTrans;
 	}
 	else
@@ -167,13 +164,12 @@ void dtrtri_(char *UPLO, char *DIAG, long * N, double * A, long * LDA, long * in
 		transa = CblasTrans;
 	}
 
-	for(i=0; i<*LDA;i++)
+	for (i = 0; i < *LDA; i++)
 	{
 		temp->data[i**LDA+i] = 1;
-		view = gsl_vector_subvector(temp,i**LDA,*LDA);
-		*info = gsl_blas_dtrsv(CblasLower,transa,CblasNonUnit,&m.matrix,
-				       &view.vector);
-		if(*UPLO == 'L')
+		view = gsl_vector_subvector(temp, i**LDA, *LDA);
+		*info = gsl_blas_dtrsv(CblasLower, transa, CblasNonUnit, &m.matrix, &view.vector);
+		if (*UPLO == 'L')
 		{
 			end = i;
 		}
@@ -181,20 +177,20 @@ void dtrtri_(char *UPLO, char *DIAG, long * N, double * A, long * LDA, long * in
 		{
 			start = i+1;
 		}
-		for(j=0;j<*LDA;j++)
+		for (j = 0; j < *LDA; j++)
 		{
-			printf("%lf ",view.vector.data[j]);
+			printf("%lf ", view.vector.data[j]);
 		}
 
-		for(j=start;j<end;j++)
+		for (j = start; j < end; j++)
 		{
-			printf("%ld ",j);
+			printf("%ld ", j);
 			temp->data[i**LDA+j] = A[i**LDA+j];
-			printf("%lf ",temp->data[i**LDA+j]);
+			printf("%lf ", temp->data[i**LDA+j]);
 		}
 		printf("\n");
 	}
-	for(i=0;i<*LDA**LDA;i++)
+	for (i = 0; i < *LDA**LDA; i++)
 	{
 		A[i] = temp->data[i];
 	}
@@ -202,5 +198,3 @@ void dtrtri_(char *UPLO, char *DIAG, long * N, double * A, long * LDA, long * in
 	gsl_vector_free(temp);
 	return;
 }
-
-

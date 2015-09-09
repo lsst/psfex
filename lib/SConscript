@@ -18,5 +18,5 @@ libs = env.getLibs("self")
 # The source files in wcs (and potentially levmar) need to be able to find
 # headers in the root src directory.
 env.Append(CPPPATH = env['CPPPATH'].append('#/src'))
-targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBS=libs))   #,LIBPATH=libs_dir))#,LIBS=libs ))
+targets["lib"].extend(env.SharedLibrary(env["packageName"], objs,LIBS=libs))
 
