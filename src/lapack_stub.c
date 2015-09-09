@@ -177,18 +177,11 @@ void dtrtri_(char *UPLO, char *DIAG, long *N, double *A, long *LDA, long *info)
 		{
 			start = i+1;
 		}
-		for (j = 0; j < *LDA; j++)
-		{
-			printf("%lf ", view.vector.data[j]);
-		}
 
 		for (j = start; j < end; j++)
 		{
-			printf("%ld ", j);
 			temp->data[i**LDA+j] = A[i**LDA+j];
-			printf("%lf ", temp->data[i**LDA+j]);
 		}
-		printf("\n");
 	}
 	for (i = 0; i < *LDA**LDA; i++)
 	{
