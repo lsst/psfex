@@ -175,6 +175,10 @@ AC_ARG_WITH(clapack,
 	[AS_HELP_STRING([--with-clapack],
 	[Provide path to CLAPACK])])
 
+AC_ARG_WITH(lapack-stub,
+	[AS_HELP_STRING([--with-lapack-stub],
+	[Use built-in stub LAPACK])])
+
 AC_ARG_WITH(lapacke,
 	[AS_HELP_STRING([--with-lapacke],
 	[Provide path to LAPACKE])])
@@ -261,10 +265,10 @@ else
     AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]),
     [#include <f2c.h>
     ])
-    AC_CHECK_LIB([lapackstub], [dposv_],
-                 [LIBS="$LIBS -llapackstub -lf2c -lm"],
-                 AC_MSG_ERROR(["Can't find lapacke library"]),
-                 [-llapackstub -lf2c -lm])
+    AC_CHECK_LIB([lapack], [dposv_],
+                 [LIBS="$LIBS -llapack -lf2c -lm"],
+                 AC_MSG_ERROR(["Can't find clapack library"]),
+                 [-llapack -lf2c -lm])
     AC_DEFINE(HAVE_CLAPACK,1, [Define if you have the CLAPACK libraries.])
     AC_DEFINE_UNQUOTED(CLAPACK_H, "clapack.h", [CLAPACK header filename.])
 ################ handle the LAPACKe library (linear algebra) #################
@@ -279,6 +283,11 @@ else
                  [-llapack -lblas -lm -lgfortran])
     AC_DEFINE(HAVE_LAPACKE,1, [Define if you have the LAPACKe libraries.])
     AC_DEFINE_UNQUOTED(LAPACKE_H, "lapacke.h", [LAPACKe header filename.])
+################ handle the built-in lapack stub (linear algebra) #################
+  elif test "x$with_lapack_stub" != "x"; then
+    AC_DEFINE(HAVE_LAPACK_STUB,1, [Define if you have the LAPACK stub.])
+    AC_DEFINE_UNQUOTED(LAPACK_STUB_H, "lapack_stub.h", [LAPACK stub header filename.])
+    AC_DEFINE_UNQUOTED(F2C_H, "f2c.h", [f2c header filename.])
   else
 ################# handle the ATLAS library (linear algebra) ##################
   ACX_ATLAS($with_atlas_libdir,$with_atlas_incdir,$use_pthreads,

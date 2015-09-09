@@ -12,6 +12,9 @@
 /* Archive creation date */
 #undef DATE
 
+/* f2c header filename. */
+#undef F2C_H
+
 /* FFTW header filename. */
 #undef FFTW_H
 
@@ -86,6 +89,9 @@
 /* Define to 1 if you have the <lapacke.h> header file. */
 #undef HAVE_LAPACKE_H
 
+/* Define if you have the LAPACK stub. */
+#undef HAVE_LAPACK_STUB
+
 /* Define to 1 if you have the `cblas' library (-lcblas). */
 #undef HAVE_LIBCBLAS
 
@@ -101,7 +107,7 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
-/* Define to 1 if the system has the type `long long int'. */
+/* Define to 1 if the system has the type 'long long int'. */
 #undef HAVE_LONG_LONG_INT
 
 /* Define to 1 if you have the <malloc.h> header file. */
@@ -183,7 +189,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type `unsigned long long int'. */
+/* Define to 1 if the system has the type 'unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
 /* LAPACKe header filename. */
@@ -191,6 +197,9 @@
 
 /* LAPACK header filename. */
 #undef LAPACK_H
+
+/* LAPACK stub header filename. */
+#undef LAPACK_STUB_H
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */

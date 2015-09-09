@@ -52,6 +52,11 @@
 #include CLAPACK_H
 #endif
 
+#ifdef HAVE_LAPACK_STUB
+#include F2C_H
+#include LAPACK_STUB_H
+#endif
+
 #define QCALLOC(ptr, typ, nel) \
                 {if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
                   qerror("Not enough memory for ", \
@@ -517,7 +522,7 @@ int     poly_solve(double *a, double *b, int n)
   return LAPACKE_dposv(LAPACK_COL_MAJOR, 'L', n, 1, a, n, b, n);
 #elif defined(HAVE_ATLAS)
   return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
-#elif defined(HAVE_CLAPACK)
+#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = n;
   dposv_("L", &num, &one, a, &num, b, &num, &info);
   return info;
@@ -735,7 +740,7 @@ void    poly_initortho(polystruct *poly, double *data, int ndata)
 #elif defined(HAVE_ATLAS)
   clapack_dtrtri(CblasRowMajor, CblasLower, CblasNonUnit, ncoeff,
         poly->orthomat, ncoeff);
-#elif defined(HAVE_CLAPACK)
+#elif defined(HAVE_CLAPACK) || defined(HAVE_CLAPACK_STUB)
   integer info = 0, num = ncoeff;
   dtrtri_("L", "N", &num, poly->orthomat, &num, &info);
 #else

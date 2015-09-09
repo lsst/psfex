@@ -61,6 +61,11 @@
 #include CLAPACK_H
 #endif
 
+#ifdef HAVE_LAPACK_STUB
+#include F2C_H
+#include LAPACK_STUB_H
+#endif
+
 static double   psf_laguerre(double x, int p, int q);
 
 /****** psf_clean *************************************************************
@@ -793,7 +798,7 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
  #else
         if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',3,1,amat,3,bmat,3) != 0)
  #endif
-#elif defined(HAVE_CLAPACK)
+#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
         integer one = 1, three = 3, info = 0;
         dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
         if (info != 0)
@@ -1126,7 +1131,7 @@ int     psf_refine(psfstruct *psf, setstruct *set)
   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,nunknown,
         betamat,nunknown) != 0)
  #endif
-#elif defined(HAVE_CLAPACK)
+#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nunknown;
   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
