@@ -15,6 +15,14 @@ config()
 	if [ "$FFTW_DIR" ]; then
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
+
+		# Workaround to enable detection of the hacked-up (prefixed)
+		# LSST-built fftw library
+		if [[ ! -z $FFTW_FUNC_PREFIX ]]; then
+			for FUNC in fftwf_execute fftw_execute fftwf_init_threads fftw_init_threads; do
+				sed -i "s| $FUNC| ${FFTW_FUNC_PREFIX}$FUNC|" configure
+			done
+		fi
 	fi
 	./configure ${options}
 }
