@@ -357,7 +357,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    maskt = mask;
    nmaskt = nmask;
    startt = start;
-   for (int j=nx2; j--; x1 += step2) {
+   for (int j = 0; j < nx2; j++, x1 += step2) {
       const int ix1 = x1;
       int ix = ix1 - hmw;
       double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
@@ -377,14 +377,14 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       *(nmaskt++) = n;
       double norm = 0.0;
       x = dxm;
-      for (int i=n; i--; x+=dstepi) {
+      for (int i = 0; i < n; i++, x += dstepi) {
 	 double pval = INTERPF(x);
 	 *maskt++ = pval;
 	 norm += pval;
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
-      for (int i=n; i--;) {
+      for (int i = 0; i < n; i++) {
 	 *maskt++ *= norm;
       }
    }
@@ -399,7 +399,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       nmaskt = nmask;
       startt = start;
       pixout = pixout0;
-      for (int j=nx2; j--; pixout+=ny1) {
+      for (int j = 0; j < nx2; j++, pixout+=ny1) {
 	 pixin = pixin0 + *(startt++);
 	 float val = 0.0; 
 	 for (int i = *nmaskt++; i--;) {
@@ -420,7 +420,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    maskt = mask;
    nmaskt = nmask;
    startt = start;
-   for (int j=ny2; j--; y1+=step2) {
+   for (int j = 0; j < ny2; j++, y1 += step2) {
       const int iy1 = y1;
       int iy = iy1 - hmh;
       double dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
@@ -440,14 +440,14 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       *(nmaskt++) = n;
       double norm = 0.0;
       y = dym;
-      for (int i=n; i--; y+=dstepi) {
+      for (int i = 0; i < n; i++, y += dstepi) {
 	 const double pval = INTERPF(y);
 	 *maskt++ = pval;
 	 norm += pval;
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
-      for (int i = n; i--;) {
+      for (int i = 0; i < n; i++) {
 	 *(maskt++) *= norm;
       }
    }
