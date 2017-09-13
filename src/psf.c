@@ -950,8 +950,9 @@ NOTES   -.
 AUTHOR  E. Bertin (IAP)
 VERSION 02/04/2013
  ***/
-int     psf_refine(psfstruct *psf, setstruct *set)
-  {
+int
+psf_refine(psfstruct *psf, setstruct *set)
+{
    polystruct           *poly;
    samplestruct         *sample;
    double               pos[MAXCONTEXT];
@@ -969,253 +970,254 @@ int     psf_refine(psfstruct *psf, setstruct *set)
    int                  i,j,jo,k,l,c,n, npix,nvpix, ndata,ncoeff,nsample,npsf,
                         ncontext, nunknown, matoffset, dindex;
 
-/* Exit if no pixel is to be "refined" or if no sample is available */
-  if (!set->nsample || !psf->basis)
-    return RETURN_ERROR;
+   /* Exit if no pixel is to be "refined" or if no sample is available */
+   if (!set->nsample || !psf->basis) {
+      return RETURN_ERROR;
+   }
+   
+   npix = psf->size[0]*psf->size[1];
+   nvpix = set->vigsize[0]*set->vigsize[1];
+   vigstep = 1/psf->pixstep;
 
-  npix = psf->size[0]*psf->size[1];
-  nvpix = set->vigsize[0]*set->vigsize[1];
-  vigstep = 1/psf->pixstep;
+   npsf = psf->nbasis;
+   ndata = psf->ndata ? psf->ndata : set->vigsize[0]*set->vigsize[1] + 1;
+   poly = psf->poly;
+   ncontext = set->ncontext;
+   ncoeff = poly->ncoeff;
+   nsample = set->nsample;
+   nunknown = ncoeff*npsf;
 
-  npsf = psf->nbasis;
-  ndata = psf->ndata? psf->ndata : set->vigsize[0]*set->vigsize[1]+1;
-  poly = psf->poly;
-  ncontext = set->ncontext;
-  ncoeff = poly->ncoeff;
-  nsample = set->nsample;
-  nunknown = ncoeff*npsf;
+   /* Prepare a vignet that will contain each projected basis vector */
+   QCALLOC(vecvig, float, nvpix);
 
-/* Prepare a vignet that will contain each projected basis vector */
-  QCALLOC(vecvig, float, nvpix);
+   //  NFPRINTF(OUTPUT,"Processing samples...");
+   matoffset =nunknown-ncoeff;           /* Offset between matrix coeffs */
+   /* Set-up the (compressed) design matrix and data vector */
+   const int maxNvpixNdata = (nvpix > ndata) ? nvpix : ndata;
+   QCALLOC(desmat, double, npsf*maxNvpixNdata);
+   QCALLOC(desindex, int, npsf*maxNvpixNdata);
+   QMALLOC(bmat, double, nvpix);
+   /* ... a matrix containing the context coefficient submatrix... */
+   QMALLOC(coeffmat, double, ncoeff*ncoeff);
+   /* ... a vignet that will contain the current vignet residuals... */
+   QMALLOC(vig, float, nvpix);
+   /* ... a vignet that will contain the current 1/sigma map... */
+   QMALLOC(sigvig, double, nvpix);
+   /* ... and allocate some more for storing the normal equations */
+   QCALLOC(alphamat, double, nunknown*nunknown);
+   QCALLOC(betamat, double, nunknown);
+   /*
+     psf_orthopoly(psf, set);
+   */
+   /* Go through each sample */
+   for (n=0; n<nsample; n++) {
+      sample=set->sample[n];
+      sprintf(str, "Processing sample #%d", n+1);
+      //    NFPRINTF(OUTPUT, str);
+      /*-- Delta-x and Delta-y in PSF-pixel units */
+      dx = -sample->dx*vigstep;
+      dy = -sample->dy*vigstep;
+      norm = (double)sample->norm;
 
-//  NFPRINTF(OUTPUT,"Processing samples...");
-  matoffset =nunknown-ncoeff;           /* Offset between matrix coeffs */
-/* Set-up the (compressed) design matrix and data vector */
-  QCALLOC(desmat, double, npsf*ndata);
-  QCALLOC(desindex, int, npsf*ndata);
-  QMALLOC(bmat, double, nvpix);
-/* ... a matrix containing the context coefficient submatrix... */
-  QMALLOC(coeffmat, double, ncoeff*ncoeff);
-/* ... a vignet that will contain the current vignet residuals... */
-  QMALLOC(vig, float, nvpix);
-/* ... a vignet that will contain the current 1/sigma map... */
-  QMALLOC(sigvig, double, nvpix);
-/* ... and allocate some more for storing the normal equations */
-  QCALLOC(alphamat, double, nunknown*nunknown);
-  QCALLOC(betamat, double, nunknown);
-/*
-  psf_orthopoly(psf, set);
-*/
-/* Go through each sample */
-  for (n=0; n<nsample; n++)
-    {
-    sample=set->sample[n];
-    sprintf(str, "Processing sample #%d", n+1);
-//    NFPRINTF(OUTPUT, str);
-/*-- Delta-x and Delta-y in PSF-pixel units */
-    dx = -sample->dx*vigstep;
-    dy = -sample->dy*vigstep;
-    norm = (double)sample->norm;
-
-/*-- Build the local PSF */
-    for (i=0; i<ncontext; i++)
-      pos[i] = (sample->context[i]-set->contextoffset[i])
-                /set->contextscale[i];
-    psf_build(psf, pos);
-
-/*-- Build the current context coefficient sub-matrix */
-    basis = poly_ortho(poly, poly->basis, poly->orthobasis);
-    for (basist=basis, coeffmatt=coeffmat, l=ncoeff; l--;)
-      for (dval=*(basist++), basist2=basis, i=ncoeff; i--;)
-        *(coeffmatt++) = dval**(basist2++);
-
-/*-- Precompute the 1/sigma-map for the current sample */
-    for (sigvigt=sigvig, wvig=sample->vigweight, i=nvpix; i--;)
-      *(sigvigt++) = sqrt(*(wvig++));
-
-/*-- Go through each relevant PSF pixel */
-    desmatt = desmat;
-    desindext = desindex;
-    if (psf->pixmask)
-      {
-/*---- Map the PSF model at the current position */
-      vignet_resample(psf->loc, psf->size[0], psf->size[1],
-                vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
-/*---- Subtract the PSF model */
-      for (vigt=vig, vigt2=sample->vig, i=nvpix; i--; vigt++)
-          *vigt = (float)(*(vigt2++) - *vigt*norm);
+      /*-- Build the local PSF */
+      for (i=0; i<ncontext; i++) {
+	 pos[i] = (sample->context[i]-set->contextoffset[i])/set->contextscale[i];
       }
-    else
-/*---- Simply copy the image data */
-      for (vigt=vig, vigt2=sample->vig, i=nvpix; i--;)
-        *(vigt++) = (float)*(vigt2++);
-    for (i=0; i<npsf; i++)
-      {
-/*---- Shift the current basis vector to the current PSF position */
-      vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
-                vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
-/*---- Retrieve coefficient for each relevant data pixel */
-      for (vecvigt=vecvig, sigvigt=sigvig,
-                desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;)
-        if (fabs(dval = *(vecvigt++) * *(sigvigt++)) > (1/BIG))
-          {
-          *(desmatt2++) = norm*dval;
-          *(desindext2++) = (j-jo);
-          jo = j;
-          }
+      psf_build(psf, pos);
 
-      *desindext2 = 0;
-
-      desindext += ndata;
-      desmatt += ndata;
+      /*-- Build the current context coefficient sub-matrix */
+      basis = poly_ortho(poly, poly->basis, poly->orthobasis);
+      for (basist=basis, coeffmatt=coeffmat, l=ncoeff; l--;) {
+	 for (dval=*(basist++), basist2=basis, i=ncoeff; i--;) {
+	    *(coeffmatt++) = dval**(basist2++);
+	 }
       }
 
-/*-- Fill the b matrix with data points */
-    for (vigt=vig, sigvigt=sigvig, bmatt=bmat, j=nvpix; j--;)
-      *(bmatt++) = *(vigt++) * *(sigvigt++);
-
-/*-- Compute the matrix of normal equations */
-    betamatt = betamat;
-    for (desmat0=desmat, desindex0=desindex, k=0; k<npsf;
-                desmat0+=ndata, desindex0+=ndata, k++)
-      {
-      for (desmat02=desmat0, desindex02=desindex0, j=k; j<npsf;
-                desmat02+=ndata, desindex02+=ndata, j++)
-        {
-        dval = 0.0;
-        desmatt=desmat0;
-        desmatt2=desmat02;
-        desindext=desindex0;
-        desindext2=desindex02;
-        dindex=*desindext-*desindext2;
-        while (*desindext && *desindext2)
-          {
-          while (*desindext && dindex<0)
-            {
-            dindex+=*(++desindext);
-            desmatt++;
-            }
-          while (*desindext2 && dindex>0)
-            {
-            dindex-=*(++desindext2);
-            desmatt2++;
-            }
-          while (*desindext && !dindex)
-            {
-            dval += *(desmatt++)**(desmatt2++);
-            dindex = *(++desindext)-*(++desindext2);
-            }
-          }
-        if (fabs(dval) > (1/BIG))
-          {
-          alphamatt = alphamat+(j+k*npsf*ncoeff)*ncoeff;
-          for (coeffmatt=coeffmat, l=ncoeff; l--; alphamatt+=matoffset)
-            for (i=ncoeff; i--;)
-              *(alphamatt++) += dval**(coeffmatt++);
-          }
-        }
-      dval = 0.0;
-      desmatt=desmat0;
-      desindext=desindex0;
-      bmatt=bmat-1;
-      while (*desindext)
-        dval += *(desmatt++)**(bmatt+=*(desindext++));
-      for (basist=basis,i=ncoeff; i--;)
-        *(betamatt++) += dval**(basist++);
+      /*-- Precompute the 1/sigma-map for the current sample */
+      for (sigvigt=sigvig, wvig=sample->vigweight, i=nvpix; i--;) {
+	 *(sigvigt++) = sqrt(*(wvig++));
       }
-    }
 
-/* Free some memory... */
-  free(coeffmat);
-  free(desmat);
-  free(desindex);
-  free(bmat);
-  free(vecvig);
-  free(vig);
-  free(sigvig);
+      /*-- Go through each relevant PSF pixel */
+      desmatt = desmat;
+      desindext = desindex;
+      if (psf->pixmask) {
+	 /*---- Map the PSF model at the current position */
+	 vignet_resample(psf->loc, psf->size[0], psf->size[1],
+			 vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
+	 /*---- Subtract the PSF model */
+	 for (vigt=vig, vigt2=sample->vig, i=nvpix; i--; vigt++) {
+	    *vigt = (float)(*(vigt2++) - *vigt*norm);
+	 }
+      } else {
+	 /*---- Simply copy the image data */
+	 for (vigt=vig, vigt2=sample->vig, i=nvpix; i--;) {
+	    *(vigt++) = (float)*(vigt2++);
+	 }
+      }
+      
+      for (i=0; i<npsf; i++) {
+	 /*---- Shift the current basis vector to the current PSF position */
+	 vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
+			 vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+	 /*---- Retrieve coefficient for each relevant data pixel */
+	 for (vecvigt=vecvig, sigvigt=sigvig,
+		 desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;) {
+	    if (fabs(dval = *(vecvigt++) * *(sigvigt++)) > (1/BIG)) {
+	       *(desmatt2++) = norm*dval;
+	       *(desindext2++) = (j-jo);
+	       jo = j;
+	    }
+	 }
+	 
+	 *desindext2 = 0;
+	 
+	 desindext += maxNvpixNdata;
+	 desmatt += maxNvpixNdata;
+      }
 
-/* Basic Tikhonov regularisation */
-  if (psf->pixmask)
-    {
-    tikfac= 0.01;
-    tikfac = 1.0/(tikfac*tikfac);
-    for (i=0; i<nunknown; i++)
-      alphamat[i+nunknown*i] += tikfac;
-    }
+      /*-- Fill the b matrix with data points */
+      for (vigt=vig, sigvigt=sigvig, bmatt=bmat, j=nvpix; j--;) {
+	 *(bmatt++) = *(vigt++) * *(sigvigt++);
+      }
 
-//  NFPRINTF(OUTPUT,"Solving the system...");
+      /*-- Compute the matrix of normal equations */
+      betamatt = betamat;
+      for (desmat0=desmat, desindex0=desindex, k=0; k<npsf;
+	   desmat0+=maxNvpixNdata, desindex0+=maxNvpixNdata, k++) {
+	 for (desmat02=desmat0, desindex02=desindex0, j=k; j<npsf;
+	      desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
+	    dval = 0.0;
+	    desmatt=desmat0;
+	    desmatt2=desmat02;
+	    desindext=desindex0;
+	    desindext2=desindex02;
+	    dindex=*desindext-*desindext2;
+
+	    while (*desindext && *desindext2) {
+	       while (*desindext && dindex<0) {
+		  dindex+=*(++desindext);
+		  desmatt++;
+	       }
+	       
+	       while (*desindext2 && dindex>0) {
+		  dindex-=*(++desindext2);
+		  desmatt2++;
+	       }
+	       
+	       while (*desindext && !dindex) {
+		  dval += *(desmatt++)**(desmatt2++);
+		  dindex = *(++desindext)-*(++desindext2);
+	       }
+	    }
+	    if (fabs(dval) > (1/BIG)) {
+	       alphamatt = alphamat+(j+k*npsf*ncoeff)*ncoeff;
+	       for (coeffmatt=coeffmat, l=ncoeff; l--; alphamatt+=matoffset) {
+		  for (i=ncoeff; i--;) {
+		     *(alphamatt++) += dval**(coeffmatt++);
+		  }
+	       }
+	    }
+	 }
+	 dval = 0.0;
+	 desmatt=desmat0;
+	 desindext=desindex0;
+	 bmatt=bmat-1;
+	 while (*desindext) {
+	    dval += *(desmatt++)**(bmatt+=*(desindext++));
+	 }
+	 for (basist=basis,i=ncoeff; i--;) {
+	    *(betamatt++) += dval**(basist++);
+	 }
+      }
+   }
+   
+   /* Free some memory... */
+   free(coeffmat);
+   free(desmat);
+   free(desindex);
+   free(bmat);
+   free(vecvig);
+   free(vig);
+   free(sigvig);
+
+   /* Basic Tikhonov regularisation */
+   if (psf->pixmask) {
+      tikfac= 0.01;
+      tikfac = 1.0/(tikfac*tikfac);
+      for (i=0; i<nunknown; i++) {
+	 alphamat[i+nunknown*i] += tikfac;
+      }
+   }
+
+   //  NFPRINTF(OUTPUT,"Solving the system...");
 
 #if defined(HAVE_LAPACKE)
  #ifdef MATSTORAGE_PACKED
-  if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,betamat,nunknown)
-        != 0)
+   if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,betamat,nunknown) != 0)
  #else
-  if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,nunknown,
-        betamat,nunknown) != 0)
+   if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,nunknown, betamat,nunknown) != 0)
  #endif
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
-  integer one = 1, info = 0, num = nunknown;
-  dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
-  if (info != 0)
+   integer one = 1, info = 0, num = nunknown;
+   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
+   if (info != 0)
 #else
-  if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,
-        betamat,nunknown) != 0)
+   if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown, betamat,nunknown) != 0)
 #endif
-    warning("Not a positive definite matrix"," in PSF model refinement solver");
+      warning("Not a positive definite matrix"," in PSF model refinement solver");
 
 /* Check whether the result is coherent or not */
 #if defined(HAVE_ISNAN2) && defined(HAVE_ISINF)
-  if (isnan(*betamat) || isinf(*betamat))
+   if (isnan(*betamat) || isinf(*betamat))
 #else
-  if ((0x7ff00000 & *(unsigned int *)((char *)betamat+4)) == 0x7ff00000)
+   if ((0x7ff00000 & *(unsigned int *)((char *)betamat+4)) == 0x7ff00000)
 #endif
-    {
-/*-- If not, exit without doing anything */
-    warning("Insufficient constraints for deriving/refining PSF", "");
-/*-- Free all */
-    free(alphamat);
-    free(betamat);
-    return RETURN_ERROR;
-    }
+   {
+      /*-- If not, exit without doing anything */
+      warning("Insufficient constraints for deriving/refining PSF", "");
+      /*-- Free all */
+      free(alphamat);
+      free(betamat);
+      return RETURN_ERROR;
+   }
 
-//  NFPRINTF(OUTPUT,"Updating the PSF...");
-  bcoeff = NULL;                /* To avoid gcc -Wall warnings */
-  if (psf->basiscoeff)
-    {
-    free(psf->basiscoeff);
-    psf->basiscoeff = NULL;
-    }
-  if (!psf->pixmask)
-    {
-    memset(psf->comp, 0, npix*ncoeff*sizeof(float));
-    QMALLOC(psf->basiscoeff, float, nunknown);
-    bcoeff = psf->basiscoeff;
-    }
-  QMALLOC(betamat2, double, ncoeff);
-  for (j=0; j<npsf; j++)
-    {
-    ppix = psf->comp;
-    betamatt = poly_deortho(poly, betamat + j*ncoeff, betamat2);
-    for (c=ncoeff; c--;)
-      {
-      vec = &psf->basis[j*npix];
-      dval = *(betamatt++);
+   //  NFPRINTF(OUTPUT,"Updating the PSF...");
+   bcoeff = NULL;                /* To avoid gcc -Wall warnings */
+   if (psf->basiscoeff) {
+      free(psf->basiscoeff);
+      psf->basiscoeff = NULL;
+   }
+   if (!psf->pixmask) {
+      memset(psf->comp, 0, npix*ncoeff*sizeof(float));
+      QMALLOC(psf->basiscoeff, float, nunknown);
+      bcoeff = psf->basiscoeff;
+   }
+   QMALLOC(betamat2, double, ncoeff);
+   for (j=0; j<npsf; j++) {
+      ppix = psf->comp;
+      betamatt = poly_deortho(poly, betamat + j*ncoeff, betamat2);
+      for (c=ncoeff; c--;) {
+	 vec = &psf->basis[j*npix];
+	 dval = *(betamatt++);
 #pragma ivdep
-      for (i=npix; i--;)
-        *(ppix++) += dval**(vec++);
-      if (psf->basiscoeff)
-/*---- Copy the basis coefficients (to be written later in PSF file) */
-        *(bcoeff++) = (float)dval;
+	 for (i=npix; i--;) {
+	    *(ppix++) += dval**(vec++);
+	 }
+	 if (psf->basiscoeff) {
+	    /*---- Copy the basis coefficients (to be written later in PSF file) */
+	    *(bcoeff++) = (float)dval;
+	 }
       }
-    }
-
-/* Free all */
-  free(alphamat);
-  free(betamat);
-  free(betamat2);
-
-  return RETURN_OK;
-  }
+   }
+   
+   /* Free all */
+   free(alphamat);
+   free(betamat);
+   free(betamat2);
+   
+   return RETURN_OK;
+}
 
 
 /****** psf_orthopoly *********************************************************
