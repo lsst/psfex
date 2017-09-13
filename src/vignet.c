@@ -275,7 +275,6 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    double	*mask,*maskt, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
    int		i,j,k,n,t, *start,*startt, *nmask,*nmaskt,
-		ix2,iy2, ny2, ny1,
 		ix,iy, ix1,iy1;
 
    if (stepi <= 0.0) {
@@ -300,6 +299,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       xs1 += dix2*step2;
    }
    int nx2 = (int)((w1 - 1 - xs1)/step2 + 1);/* nb of interpolated Im2 pixels along x */
+   int ix2;
    if (nx2 > (ix2 = w2 - ixs2)) {
       nx2 = ix2;
    }
@@ -322,11 +322,12 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       iys2 += diy2;
       ys1 += diy2*step2;
    }
-   ny2 = (int)((h1-1-ys1)/step2+1);/* nb of interpolated Im2 pixels along y */
-   if (ny2>(iy2=h2-iys2)) {
+   int ny2 = (h1 - 1 - ys1)/step2 + 1;	/* nb of interpolated Im2 pixels along y */
+   int iy2;
+   if (ny2 > (iy2=h2-iys2)) {
       ny2 = iy2;
    }
-   if (ny2<=0) {
+   if (ny2 <= 0) {
       return RETURN_ERROR;
    }
    
@@ -339,8 +340,8 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    if (iys1a < 0 || ((iys1a -= hmh)< 0)) {
       iys1a = 0;
    }
-   ny1 = (int)(ys1+ny2*step2)+interpw-hmh;	/* Interpolated Im1 y size */
-   if (ny1>h1) {					/* with margin */
+   int ny1 = (ys1 + ny2*step2) + interpw - hmh;	/* Interpolated Im1 y size */
+   if (ny1 > h1) {				/* with margin */
       ny1 = h1;
    }
    /* Express everything relative to the effective Im1 start (with margin) */
