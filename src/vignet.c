@@ -275,8 +275,8 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    double	*mask,*maskt, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
    int		i,j,k,n,t, *start,*startt, *nmask,*nmaskt,
-		ixs2,iys2, ix2,iy2, dix2,diy2, ny2, iys1a, ny1, hmw,hmh,
-		ix,iy, ix1,iy1, interpw, interph;
+		ix2,iy2, ny2, ny1,
+		ix,iy, ix1,iy1;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -289,9 +289,9 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    if ((int)xs1 >= w1) {
       return RETURN_ERROR;
    }
-   ixs2 = 0;			/* Int part of Im2 start x-coord */
+   int ixs2 = 0;			/* Int part of Im2 start x-coord */
    if (xs1 < 0.0) {
-      dix2 = (int)(1 - xs1/step2);
+      const int dix2 = 1 - xs1/step2;
       /*-- Simply leave here if the images do not overlap in x */
       if (dix2 >= w2) {
 	 return RETURN_ERROR;
@@ -312,10 +312,10 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    if ((int)ys1 >= h1) {
       return RETURN_ERROR;
    }
-   iys2 = 0;			/* Int part of Im2 start y-coord */
+   int iys2 = 0;			/* Int part of Im2 start y-coord */
    if (ys1<0.0) {
-      diy2 = (int)(1-ys1/step2);
-/*-- Simply leave here if the images do not overlap in y */
+      const int diy2 = 1 - ys1/step2;
+      /*-- Simply leave here if the images do not overlap in y */
       if (diy2 >= h2) {
 	 return RETURN_ERROR;
       }
@@ -331,12 +331,12 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    }
    
    /* Set the yrange for the x-resampling with some margin for interpolation */
-   iys1a = (int)ys1;		/* Int part of Im1 start y-coord with margin */
-   hmh = (int)((INTERPW/2)/dstepi) + 2;	/* Interpolant start */
-   interph = 2*hmh;
-   hmw = (int)((INTERPW/2)/dstepi) + 2;
-   interpw =  2*hmw;
-   if (iys1a<0 || ((iys1a -= hmh)< 0)) {
+   int iys1a = ys1;			   /* Int part of Im1 start y-coord with margin */
+   const int hmh = (INTERPW/2)/dstepi + 2; /* Interpolant start */
+   const int interph = 2*hmh;
+   const int hmw = (INTERPW/2)/dstepi + 2;
+   const int interpw =  2*hmw;
+   if (iys1a < 0 || ((iys1a -= hmh)< 0)) {
       iys1a = 0;
    }
    ny1 = (int)(ys1+ny2*step2)+interpw-hmh;	/* Interpolated Im1 y size */
