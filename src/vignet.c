@@ -323,8 +323,8 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       ys1 += diy2*step2;
    }
    int ny2 = (h1 - 1 - ys1)/step2 + 1;	/* nb of interpolated Im2 pixels along y */
-   int iy2;
-   if (ny2 > (iy2=h2-iys2)) {
+   const int iy2 = h2 - iys2;
+   if (ny2 > iy2) {
       ny2 = iy2;
    }
    if (ny2 <= 0) {
