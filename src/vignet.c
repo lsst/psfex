@@ -266,7 +266,7 @@ int	ovignet_resample(const float *pix1, int w1, int h1,
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
 int
 vignet_resample(const float *pix1, const int w1, const int h1, /* input */
-		float *pix2, const int w2, const int h2,	   /* output */
+		float *pix2, const int w2, const int h2,       /* output */
 		const double dx, const double dy,
 		const float step2,
 		float stepi)
@@ -336,7 +336,8 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    const int interph = 2*hmh;
    const int hmw = (INTERPW/2)/dstepi + 2;
    const int interpw =  2*hmw;
-   if (iys1a < 0 || ((iys1a -= hmh)< 0)) {
+   iys1a -= hmh;
+   if (iys1a < 0) {
       iys1a = 0;
    }
    int ny1 = (ys1 + ny2*step2) + interpw - hmh;	/* Interpolated Im1 y size */
@@ -377,12 +378,14 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       double norm = 0.0;
       x = dxm;
       for (int i=n; i--; x+=dstepi) {
-	 norm +=( *(maskt++) = INTERPF(x));
+	 double pval = INTERPF(x);
+	 *maskt++ = pval;
+	 norm += pval;
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
       for (int i=n; i--;) {
-	 *(maskt++) *= norm;
+	 *maskt++ *= norm;
       }
    }
    
@@ -400,7 +403,8 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
 	 pixin = pixin0+*(startt++);
 	 float val = 0.0; 
 	 for (int i = *nmaskt++; i--;) {
-	    val += *(maskt++)*(double)*(pixin++);
+	    const double pval = *pixin++;
+	    val += pval*(*maskt++);
 	 }
 	 *pixout = val;
       }
@@ -437,7 +441,9 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       double norm = 0.0;
       y = dym;
       for (int i=n; i--; y+=dstepi) {
-	 norm += (*(maskt++) = INTERPF(y));
+	 const double pval = INTERPF(y);
+	 *maskt++ = pval;
+	 norm += pval;
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
