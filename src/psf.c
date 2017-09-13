@@ -66,6 +66,14 @@
 #include LAPACK_STUB_H
 #endif
 
+#define DUMP_IMAGES 1
+#if !defined(DUMP_IMAGES)
+#   define DUMP_IMAGES 0
+#endif
+#if DUMP_IMAGES
+#include "fits_debug.h"
+#endif
+
 static double   psf_laguerre(double x, int p, int q);
 
 /****** psf_clean *************************************************************
@@ -590,6 +598,13 @@ void    psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
       {
       *pos = 1.0;
       }
+#if DUMP_IMAGES
+    {
+       char fileName[80];
+       sprintf(fileName, "resampledImage_%d.fits", n);
+       write_fits_image(fileName, &image[n*npix], psf->size[0], psf->size[1]);
+    }	  
+#endif
   }
 
 /* Make a polynomial fit to each pixel */
