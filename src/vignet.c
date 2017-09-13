@@ -265,16 +265,16 @@ int	ovignet_resample(const float *pix1, int w1, int h1,
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
 int
-vignet_resample(const float *pix1, int w1, int h1, /* input */
-		float *pix2, int w2, int h2,	   /* output */
-		double dx, double dy,
-		float step2,
+vignet_resample(const float *pix1, const int w1, const int h1, /* input */
+		float *pix2, const int w2, const int h2,	   /* output */
+		const double dx, const double dy,
+		const float step2,
 		float stepi)
 {
    static float	*statpix2;
    double	*mask,*maskt, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
-   int		n, *start,*startt, *nmask,*nmaskt;
+   int		*start,*startt, *nmask,*nmaskt;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -297,7 +297,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       ixs2 += dix2;
       xs1 += dix2*step2;
    }
-   int nx2 = (int)((w1 - 1 - xs1)/step2 + 1);/* nb of interpolated Im2 pixels along x */
+   int nx2 = (w1 - 1 - xs1)/step2 + 1;	/* nb of interpolated Im2 pixels along x */
    const int ix2 = w2 - ixs2;
    if (nx2 > ix2) {
       nx2 = ix2;
@@ -312,7 +312,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       return RETURN_ERROR;
    }
    int iys2 = 0;			/* Int part of Im2 start y-coord */
-   if (ys1<0.0) {
+   if (ys1 < 0.0) {
       const int diy2 = 1 - ys1/step2;
       /*-- Simply leave here if the images do not overlap in y */
       if (diy2 >= h2) {
@@ -347,19 +347,20 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    ny1 -= iys1a;
    ys1 -= (double)iys1a;
    
-/* Allocate interpolant stuff for the x direction */
+   /* Allocate interpolant stuff for the x direction */
    QMALLOC(mask, double, nx2*interpw);	/* Interpolation masks */
    QMALLOC(nmask, int, nx2);		/* Interpolation mask sizes */
    QMALLOC(start, int, nx2);		/* Int part of Im1 conv starts */
-/* Compute the local interpolant and data starting points in x */
+   /* Compute the local interpolant and data starting points in x */
    double x1 = xs1;
    maskt = mask;
    nmaskt = nmask;
    startt = start;
-   for (int j=nx2; j--; x1+=step2) {
+   for (int j=nx2; j--; x1 += step2) {
       const int ix1 = x1;
       int ix = ix1 - hmw;
       double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
+      int n;
       if (ix < 0) {
 	 n = interpw+ix;
 	 dxm -= (double)ix*dstepi;
@@ -419,6 +420,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       const int iy1 = y1;
       int iy = iy1 - hmh;
       double dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
+      int n;
       if (iy < 0) {
 	 n = interph + iy;
 	 dym -= (double)iy*dstepi;
@@ -444,7 +446,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       }
    }
    
-/* Initialize destination buffer to zero if pix2 != NULL */
+   /* Initialize destination buffer to zero if pix2 != NULL */
    if (!pix2) {
       pix2 = statpix2;
    } else {
@@ -452,9 +454,9 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       statpix2 = pix2;
    }
    
-/* Make the interpolation in y  and transpose once again */
+   /* Make the interpolation in y  and transpose once again */
    pixin0 = pix12;
-   pixout0 = pix2+ixs2+iys2*w2;
+   pixout0 = pix2 + ixs2 + iys2*w2;
    for (int k=nx2; k--; pixin0+=ny1, pixout0++) {
       maskt = mask;
       nmaskt = nmask;
@@ -470,7 +472,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       }
    }
    
-/* Free memory */
+   /* Free memory */
    free(pix12);
    free(mask);
    free(nmask);
