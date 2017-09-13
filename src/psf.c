@@ -958,11 +958,11 @@ psf_refine(psfstruct *psf, setstruct *set)
    double               pos[MAXCONTEXT];
    char                 str[MAXCHAR];
    double               *desmat,*desmatt,*desmatt2, *desmat0,*desmat02,
-                        *bmat,*bmatt, *basis,*basist, *basist2,
+                        *bmat,*bmatt, *basis,*basist,
                         *sigvig,*sigvigt, *alphamat,*alphamatt,
                         *betamat,*betamatt,*betamat2, *coeffmat,*coeffmatt,
                         dx,dy, norm, tikfac;
-   float                *vig,*vigt,*vigt2, *wvig,
+   float                *vig,*vigt,
                         *vecvig,*vecvigt, *ppix, *vec, *bcoeff,
                         vigstep;
    int                  *desindex,*desindext,*desindext2,
@@ -1544,7 +1544,7 @@ VERSION 13/11/2007
 int     psf_readbasis(psfstruct *psf, char *filename, int ext)
   {
    catstruct    *cat;
-   tabstruct    *tab, *firstab;
+   tabstruct    *tab;
    PIXTYPE      *pixin;
    int          n, next, extp1, ntabp1, npixin,npixout,ncomp;
 
@@ -1554,13 +1554,10 @@ int     psf_readbasis(psfstruct *psf, char *filename, int ext)
 /* Go to the right extension */
   tab = cat->tab;
   ntabp1 = cat->ntab+1;
-  firstab = NULL;
   extp1 = ext+1;
   for (next=0; ntabp1-- && next<extp1; tab = tab->nexttab)
     if (tab->naxis>=2)
       {
-      if (!next)
-        firstab = tab;
       next++;
       }
   if (!ntabp1)
