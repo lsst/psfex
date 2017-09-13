@@ -54,7 +54,7 @@ typedef  enum {VIGNET_CPY, VIGNET_ADD, VIGNET_SUB, VIGNET_MUL, VIGNET_DIV}
 extern int	vignet_copy(float *pix1, int w1, int h1,
 			float *pix2, int w2, int h2, int idx, int idy,
 			vigopenum vigop),
-		vignet_resample(float *pix1, int w1, int h1, float *pix2,
+		vignet_resample(const float *pix1, int w1, int h1, float *pix2,
 			int w2, int h2, double dx, double dy, float step2,
 			float stepi);
 

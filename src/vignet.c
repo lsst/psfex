@@ -64,7 +64,7 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	13/09/2010
  ***/
-int	vignet_resample(float *pix1, int w1, int h1,
+int	ovignet_resample(const float *pix1, int w1, int h1,
 		float *pix2, int w2, int h2, double dx, double dy, float step2,
 		float stepi)
   {
@@ -263,6 +263,442 @@ int	vignet_resample(float *pix1, int w1, int h1,
   return RETURN_OK;
   }
 
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+int
+vignet_resample(const float *pix1, int w1, int h1, /* input */
+		float *pix2, int w2, int h2,	   /* output */
+		double dx, double dy,
+		float step2,
+		float stepi)
+{
+   static float	*statpix2;
+   double	*mask,*maskt, x, y;
+   float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
+   int		i,j,k,n,t, *start,*startt, *nmask,*nmaskt,
+		ixs2,iys2, ix2,iy2, dix2,diy2, ny2, iys1a, ny1, hmw,hmh,
+		ix,iy, ix1,iy1, interpw, interph;
+
+   if (stepi <= 0.0) {
+      stepi = 1.0;
+   }
+   const double dstepi = 1.0/stepi;
+   const double mx1 = w1/2;		/* Im1 center x-coord*/
+   const double mx2 = w2/2;		/* Im2 center x-coord*/
+   double xs1 = mx1 + dx - mx2*step2;	/* Im1 start x-coord */
+
+   if ((int)xs1 >= w1) {
+      return RETURN_ERROR;
+   }
+   ixs2 = 0;			/* Int part of Im2 start x-coord */
+   if (xs1 < 0.0) {
+      dix2 = (int)(1 - xs1/step2);
+      /*-- Simply leave here if the images do not overlap in x */
+      if (dix2 >= w2) {
+	 return RETURN_ERROR;
+      }
+      ixs2 += dix2;
+      xs1 += dix2*step2;
+   }
+   int nx2 = (int)((w1 - 1 - xs1)/step2 + 1);/* nb of interpolated Im2 pixels along x */
+   if (nx2 > (ix2 = w2 - ixs2)) {
+      nx2 = ix2;
+   }
+   if (nx2 <= 0) {
+      return RETURN_ERROR;
+   }
+   const double my1 = h1/2;		/* Im1 center y-coord */
+   const double my2 = h2/2;		/* Im2 center y-coord */
+   double ys1 = my1 + dy - my2*step2;	/* Im1 start y-coord */
+   if ((int)ys1 >= h1) {
+      return RETURN_ERROR;
+   }
+   iys2 = 0;			/* Int part of Im2 start y-coord */
+   if (ys1<0.0) {
+      diy2 = (int)(1-ys1/step2);
+/*-- Simply leave here if the images do not overlap in y */
+      if (diy2 >= h2) {
+	 return RETURN_ERROR;
+      }
+      iys2 += diy2;
+      ys1 += diy2*step2;
+   }
+   ny2 = (int)((h1-1-ys1)/step2+1);/* nb of interpolated Im2 pixels along y */
+   if (ny2>(iy2=h2-iys2)) {
+      ny2 = iy2;
+   }
+   if (ny2<=0) {
+      return RETURN_ERROR;
+   }
+   
+   /* Set the yrange for the x-resampling with some margin for interpolation */
+   iys1a = (int)ys1;		/* Int part of Im1 start y-coord with margin */
+   hmh = (int)((INTERPW/2)/dstepi) + 2;	/* Interpolant start */
+   interph = 2*hmh;
+   hmw = (int)((INTERPW/2)/dstepi) + 2;
+   interpw =  2*hmw;
+   if (iys1a<0 || ((iys1a -= hmh)< 0)) {
+      iys1a = 0;
+   }
+   ny1 = (int)(ys1+ny2*step2)+interpw-hmh;	/* Interpolated Im1 y size */
+   if (ny1>h1) {					/* with margin */
+      ny1 = h1;
+   }
+   /* Express everything relative to the effective Im1 start (with margin) */
+   ny1 -= iys1a;
+   ys1 -= (double)iys1a;
+   
+/* Allocate interpolant stuff for the x direction */
+   QMALLOC(mask, double, nx2*interpw);	/* Interpolation masks */
+   QMALLOC(nmask, int, nx2);		/* Interpolation mask sizes */
+   QMALLOC(start, int, nx2);		/* Int part of Im1 conv starts */
+/* Compute the local interpolant and data starting points in x */
+   double x1 = xs1;
+   maskt = mask;
+   nmaskt = nmask;
+   startt = start;
+   for (j=nx2; j--; x1+=step2) {
+      ix = (ix1=(int)x1) - hmw;
+      double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
+      if (ix < 0) {
+	 n = interpw+ix;
+	 dxm -= (double)ix*dstepi;
+	 ix = 0;
+      } else {
+	 n = interpw;
+      }
+      if (n>(t=w1-ix)) {
+	 n=t;
+      }
+      *(startt++) = ix;
+      *(nmaskt++) = n;
+      double norm = 0.0;
+      for (x=dxm, i=n; i--; x+=dstepi) {
+	 norm +=( *(maskt++) = INTERPF(x));
+      }
+      norm = norm>0.0? 1.0/norm : dstepi;
+      maskt -= n;
+      for (i=n; i--;) {
+	 *(maskt++) *= norm;
+      }
+   }
+   
+   QCALLOC(pix12, float, nx2*ny1);	/* Intermediary frame-buffer */
+
+   /* Make the interpolation in x (this includes transposition) */
+   pixin0 = pix1+iys1a*w1;
+   pixout0 = pix12;
+   for (k=ny1; k--; pixin0+=w1, pixout0++) {
+      maskt = mask;
+      nmaskt = nmask;
+      startt = start;
+      pixout = pixout0;
+      for (j=nx2; j--; pixout+=ny1) {
+	 pixin = pixin0+*(startt++);
+	 float val = 0.0; 
+	 for (i=*(nmaskt++); i--;) {
+	    val += *(maskt++)*(double)*(pixin++);
+	 }
+	 *pixout = val;
+      }
+   }
+  
+   /* Reallocate interpolant stuff for the y direction */
+   QREALLOC(mask, double, ny2*interph);	/* Interpolation masks */
+   QREALLOC(nmask, int, ny2);		/* Interpolation mask sizes */
+   QREALLOC(start, int, ny2);		/* Int part of Im1 conv starts */
+   
+   /* Compute the local interpolant and data starting points in y */
+   double y1 = ys1;
+   maskt = mask;
+   nmaskt = nmask;
+   startt = start;
+   for (j=ny2; j--; y1+=step2) {
+      iy = (iy1=(int)y1) - hmh;
+      double dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
+      if (iy < 0) {
+	 n = interph+iy;
+	 dym -= (double)iy*dstepi;
+	 iy = 0;
+      } else {
+	 n = interph;
+      }
+      if (n>(t=ny1-iy)) {
+	 n=t;
+      }
+      *(startt++) = iy;
+      *(nmaskt++) = n;
+      double norm = 0.0;
+      for (y=dym, i=n; i--; y+=dstepi) {
+	 norm += (*(maskt++) = INTERPF(y));
+      }
+      norm = norm>0.0? 1.0/norm : dstepi;
+      maskt -= n;
+      for (i=n; i--;) {
+	 *(maskt++) *= norm;
+      }
+   }
+   
+/* Initialize destination buffer to zero if pix2 != NULL */
+   if (!pix2) {
+      pix2 = statpix2;
+   } else {
+      memset(pix2, 0, (size_t)(w2*h2)*sizeof(float));
+      statpix2 = pix2;
+   }
+   
+/* Make the interpolation in y  and transpose once again */
+   pixin0 = pix12;
+   pixout0 = pix2+ixs2+iys2*w2;
+   for (k=nx2; k--; pixin0+=ny1, pixout0++) {
+      maskt = mask;
+      nmaskt = nmask;
+      startt = start;
+      pixout = pixout0;
+      for (j=ny2; j--; pixout+=w2) {
+	 pixin = pixin0+*(startt++);
+	 float val = 0.0; 
+	 for (i=*(nmaskt++); i--;) {
+	    val += *(maskt++)*(double)*(pixin++);
+	 }
+	 *pixout = val;
+      }
+   }
+   
+/* Free memory */
+   free(pix12);
+   free(mask);
+   free(nmask);
+   free(start);
+   
+   return RETURN_OK;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/*
+ * Rewrite by RHL for clarity
+ */
+int
+vignet_resampleBAD(const float *pix1, int w1, int h1, /* input */
+		float *pix2, int w2, int h2, /* output */
+		double dx, double dy,
+		float step2,
+		float stepi)
+{
+   static float	*statpix2;
+   double	*mask,*maskt, mx1,mx2,my1,my2, xs1,ys1, x1,y1, x,y, dxm,dym,
+      dstepi, norm;
+   float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
+   int		i,j,k,n,t, *start,*startt, *nmask,*nmaskt,
+      ixs2,iys2, ix2,iy2, dix2,diy2, nx2,ny2, iys1a, ny1, hmw,hmh,
+      ix,iy, ix1,iy1, interpw, interph;
+   
+   if (stepi <= 0.0) {
+      stepi = 1.0;
+   }
+   dstepi = 1.0/stepi;
+   mx1 = (double)(w1/2);		/* Im1 center x-coord*/
+   mx2 = (double)(w2/2);		/* Im2 center x-coord*/
+   xs1 = mx1 + dx - mx2*step2;	/* Im1 start x-coord */
+
+   if ((int)xs1 >= w1) {
+      return RETURN_ERROR;
+   }
+   ixs2 = 0;			/* Int part of Im2 start x-coord */
+   if (xs1<0.0) {
+      dix2 = (int)(1 - xs1/step2);
+/*-- Simply leave here if the images do not overlap in x */
+      if (dix2 >= w2) {
+	 return RETURN_ERROR;
+      }
+      ixs2 += dix2;
+      xs1 += dix2*step2;
+   }
+   nx2 = (w1 - 1 - xs1)/step2 + 1;	/* nb of interpolated Im2 pixels along x */
+   ix2 = w2-ixs2;
+   if (nx2 > ix2) {
+      nx2 = ix2;
+   }
+   if (nx2 <= 0) {
+      return RETURN_ERROR;
+   }
+   my1 = (double)(h1/2);		/* Im1 center y-coord */
+   my2 = (double)(h2/2);		/* Im2 center y-coord */
+   ys1 = my1 + dy - my2*step2;		/* Im1 start y-coord */
+   if ((int)ys1 >= h1) {
+      return RETURN_ERROR;
+   }
+   iys2 = 0;				/* Int part of Im2 start y-coord */
+   if (ys1 < 0.0) {
+      diy2 = 1 - ys1/step2;
+/*-- Simply leave here if the images do not overlap in y */
+      if (diy2 >= h2) {
+	 return RETURN_ERROR;
+      }
+      iys2 += diy2;
+      ys1 += diy2*step2;
+   }
+   ny2 = (h1 - 1 - ys1)/step2 + 1;	/* nb of interpolated Im2 pixels along y */
+   iy2 = h2 - iys2;
+   if (ny2 > iy2) {
+      ny2 = iy2;
+   }
+   if (ny2<=0) {
+      return RETURN_ERROR;
+   }
+
+/* Set the yrange for the x-resampling with some margin for interpolation */
+   iys1a = (int)ys1;			/* Int part of Im1 start y-coord with margin */
+   hmh = (INTERPW/2)/dstepi + 2;	/* Interpolant start */
+   interph = 2*hmh;
+   hmw = (INTERPW/2)/dstepi + 2;
+   interpw =  2*hmw;
+
+   iys1a -= hmh;
+   if (iys1a < 0) {
+      iys1a = 0;
+   }
+   ny1 = (ys1 + ny2*step2) + interpw - hmh; /* Interpolated Im1 y size */
+   if (ny1 > h1) {			    /* with margin */
+      ny1 = h1;
+   }
+   /* Express everything relative to the effective Im1 start (with margin) */
+   ny1 -= iys1a;
+   ys1 -= (double)iys1a;
+   
+   /* Allocate interpolant stuff for the x direction */
+   QMALLOC(mask, double, nx2*interpw);	/* Interpolation masks */
+   QMALLOC(nmask, int, nx2);		/* Interpolation mask sizes */
+   QMALLOC(start, int, nx2);		/* Int part of Im1 conv starts */
+   /* Compute the local interpolant and data starting points in x */
+   x1 = xs1;
+   maskt = mask;
+   nmaskt = nmask;
+   startt = start;
+   for (j=nx2; j--; x1 += step2) {
+      ix1 = (int)x1;
+      ix = ix1 - hmw;
+      dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
+      if (ix < 0) {
+	 n = interpw+ix;
+	 dxm -= (double)ix*dstepi;
+	 ix = 0;
+      } else {
+	 n = interpw;
+      }
+      t = w1 - ix;
+      if (n > t) {
+	 n = t;
+      }
+      *(startt++) = ix;
+      *(nmaskt++) = n;
+      norm = 0.0;
+      for (x = dxm, i = n; i--; x += dstepi) {
+	 double val = INTERPF(x); 
+	 *maskt++ = val;
+	 norm += val;
+      }
+      norm = norm > 0.0 ? 1.0/norm : dstepi;
+      maskt -= n;
+      for (i=n; i--;) {
+	 *maskt++ *= norm;
+      }
+   }
+
+   QCALLOC(pix12, float, nx2*ny1);	/* Intermediary frame-buffer */
+
+/* Make the interpolation in x (this includes transposition) */
+   pixin0 = pix1 + iys1a*w1;
+   pixout0 = pix12;
+   for (k=ny1; k--; pixin0 += w1, pixout0++) {
+      maskt = mask;
+      nmaskt = nmask;
+      startt = start;
+      pixout = pixout0;
+      for (j=nx2; j--; pixout+=ny1) {
+	 pixin = pixin0 + *startt++;
+	 double val = 0.0; 
+	 for (i=*(nmaskt++); i--;) {
+	    val += *(maskt++)*(double)*(pixin++);
+	 }
+	 *pixout = (float)val;
+      }
+   }
+
+/* Reallocate interpolant stuff for the y direction */
+   QREALLOC(mask, double, ny2*interph);	/* Interpolation masks */
+   QREALLOC(nmask, int, ny2);		/* Interpolation mask sizes */
+   QREALLOC(start, int, ny2);		/* Int part of Im1 conv starts */
+
+/* Compute the local interpolant and data starting points in y */
+   y1 = ys1;
+   maskt = mask;
+   nmaskt = nmask;
+   startt = start;
+   for (j=ny2; j--; y1+=step2) {
+      iy1 = (int)y1;
+      iy = iy1 - hmh;
+      dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
+      if (iy < 0) {
+	 n = interph+iy;
+	 dym -= (double)iy*dstepi;
+	 iy = 0;
+      } else {
+	 n = interph;
+      }
+      t=ny1 = iy;
+      if (n > t) {
+	 n = t;
+      }
+      *(startt++) = iy;
+      *(nmaskt++) = n;
+      norm = 0.0;
+      for (y=dym, i=n; i--; y+=dstepi) {
+	 double val = INTERPF(y);
+	 *(maskt++) = val;
+	 norm += val;
+      }
+      norm = norm > 0.0? 1.0/norm : dstepi;
+      maskt -= n;
+      for (i=n; i--;) {
+	 *maskt++ *= norm;
+      }
+   }
+
+/* Initialize destination buffer to zero if pix2 != NULL */
+   if (!pix2) {
+      pix2 = statpix2;
+   } else {
+      memset(pix2, 0, (size_t)(w2*h2)*sizeof(float));
+      statpix2 = pix2;
+   }
+
+/* Make the interpolation in y  and transpose once again */
+   pixin0 = pix12;
+   pixout0 = pix2 + ixs2 + iys2*w2;
+   for (k=nx2; k--; pixin0 += ny1, pixout0++) {
+      maskt = mask;
+      nmaskt = nmask;
+      startt = start;
+      pixout = pixout0;
+      for (j=ny2; j--; pixout += w2) {
+	 pixin = pixin0 + *startt++;
+	 double val = 0.0;
+	 for (i = *nmaskt++; i--;) {
+	    double pval = *pixin++;
+	    val += pval*(*maskt++);
+	 }
+	 *pixout = (float)val;
+      }
+   }
+
+/* Free memory */
+   free(pix12);
+   free(mask);
+   free(nmask);
+   free(start);
+
+   return RETURN_OK;
+}
 
 /******************************** vignet_copy ********************************/
 /*
