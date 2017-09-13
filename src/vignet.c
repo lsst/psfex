@@ -274,7 +274,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    static float	*statpix2;
    double	*mask,*maskt, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
-   int		i,j,k,n, *start,*startt, *nmask,*nmaskt;
+   int		n, *start,*startt, *nmask,*nmaskt;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -356,7 +356,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    maskt = mask;
    nmaskt = nmask;
    startt = start;
-   for (j=nx2; j--; x1+=step2) {
+   for (int j=nx2; j--; x1+=step2) {
       const int ix1 = x1;
       int ix = ix1 - hmw;
       double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
@@ -374,12 +374,13 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       *(startt++) = ix;
       *(nmaskt++) = n;
       double norm = 0.0;
-      for (x=dxm, i=n; i--; x+=dstepi) {
+      x = dxm;
+      for (int i=n; i--; x+=dstepi) {
 	 norm +=( *(maskt++) = INTERPF(x));
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
-      for (i=n; i--;) {
+      for (int i=n; i--;) {
 	 *(maskt++) *= norm;
       }
    }
@@ -389,15 +390,15 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    /* Make the interpolation in x (this includes transposition) */
    pixin0 = pix1+iys1a*w1;
    pixout0 = pix12;
-   for (k=ny1; k--; pixin0+=w1, pixout0++) {
+   for (int k=ny1; k--; pixin0+=w1, pixout0++) {
       maskt = mask;
       nmaskt = nmask;
       startt = start;
       pixout = pixout0;
-      for (j=nx2; j--; pixout+=ny1) {
+      for (int j=nx2; j--; pixout+=ny1) {
 	 pixin = pixin0+*(startt++);
 	 float val = 0.0; 
-	 for (i=*(nmaskt++); i--;) {
+	 for (int i = *nmaskt++; i--;) {
 	    val += *(maskt++)*(double)*(pixin++);
 	 }
 	 *pixout = val;
@@ -414,7 +415,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    maskt = mask;
    nmaskt = nmask;
    startt = start;
-   for (j=ny2; j--; y1+=step2) {
+   for (int j=ny2; j--; y1+=step2) {
       const int iy1 = y1;
       int iy = iy1 - hmh;
       double dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
@@ -432,12 +433,13 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       *(startt++) = iy;
       *(nmaskt++) = n;
       double norm = 0.0;
-      for (y=dym, i=n; i--; y+=dstepi) {
+      y = dym;
+      for (int i=n; i--; y+=dstepi) {
 	 norm += (*(maskt++) = INTERPF(y));
       }
       norm = norm>0.0? 1.0/norm : dstepi;
       maskt -= n;
-      for (i=n; i--;) {
+      for (int i = n; i--;) {
 	 *(maskt++) *= norm;
       }
    }
@@ -453,15 +455,15 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
 /* Make the interpolation in y  and transpose once again */
    pixin0 = pix12;
    pixout0 = pix2+ixs2+iys2*w2;
-   for (k=nx2; k--; pixin0+=ny1, pixout0++) {
+   for (int k=nx2; k--; pixin0+=ny1, pixout0++) {
       maskt = mask;
       nmaskt = nmask;
       startt = start;
       pixout = pixout0;
-      for (j=ny2; j--; pixout+=w2) {
+      for (int j=ny2; j--; pixout+=w2) {
 	 pixin = pixin0+*(startt++);
 	 float val = 0.0; 
-	 for (i=*(nmaskt++); i--;) {
+	 for (int i= *nmaskt++; i--;) {
 	    val += *(maskt++)*(double)*(pixin++);
 	 }
 	 *pixout = val;
