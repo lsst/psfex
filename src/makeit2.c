@@ -495,6 +495,7 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
     }
   psf_refine(psf, set);
 
+#if 1					/* RHL */
 /* Remove bad PSF candidates */
   if (set->nsample>1)
     {
@@ -536,7 +537,7 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
 /* This was added because we no longer run psf_clean in the diagnostics */
   psf_clean(psf, set, prefs.prof_accuracy);
   psf_refine(psf, set);
-
+#endif
   
 /*-- Just check the Chi2 */
   psf->chi2 = set->nsample? psf_chi2(psf, set) : 0.0;

@@ -961,13 +961,13 @@ psf_refine(psfstruct *psf, setstruct *set)
                         *bmat,*bmatt, *basis,*basist, *basist2,
                         *sigvig,*sigvigt, *alphamat,*alphamatt,
                         *betamat,*betamatt,*betamat2, *coeffmat,*coeffmatt,
-                        dx,dy, dval, norm, tikfac;
+                        dx,dy, norm, tikfac;
    float                *vig,*vigt,*vigt2, *wvig,
                         *vecvig,*vecvigt, *ppix, *vec, *bcoeff,
                         vigstep;
    int                  *desindex,*desindext,*desindext2,
                         *desindex0,*desindex02;
-   int                  i,j,jo,k,l,c,n, npix,nvpix, ndata,ncoeff,nsample,npsf,
+   int                  j,jo,k,l,c,npix,nvpix, ndata,ncoeff,nsample,npsf,
                         ncontext, nunknown, matoffset, dindex;
 
    /* Exit if no pixel is to be "refined" or if no sample is available */
@@ -1010,7 +1010,7 @@ psf_refine(psfstruct *psf, setstruct *set)
      psf_orthopoly(psf, set);
    */
    /* Go through each sample */
-   for (n=0; n<nsample; n++) {
+   for (int n=0; n < nsample; n++) {
       sample=set->sample[n];
       sprintf(str, "Processing sample #%d", n+1);
       //    NFPRINTF(OUTPUT, str);
@@ -1020,52 +1020,51 @@ psf_refine(psfstruct *psf, setstruct *set)
       norm = (double)sample->norm;
 
       /*-- Build the local PSF */
-      for (i=0; i<ncontext; i++) {
+      for (int i=0; i < ncontext; i++) {
 	 pos[i] = (sample->context[i]-set->contextoffset[i])/set->contextscale[i];
       }
       psf_build(psf, pos);
 
       /*-- Build the current context coefficient sub-matrix */
       basis = poly_ortho(poly, poly->basis, poly->orthobasis);
-      for (basist=basis, coeffmatt=coeffmat, l=ncoeff; l--;) {
-	 for (dval=*(basist++), basist2=basis, i=ncoeff; i--;) {
-	    *(coeffmatt++) = dval**(basist2++);
+      for (basist=basis, coeffmatt=coeffmat, l = 0; l < ncoeff; l++) {
+	 const double dval = *basist++;
+	 for (int i= 0; i < ncoeff; i++) {
+	    *(coeffmatt++) = dval*basis[i];
 	 }
       }
 
       /*-- Precompute the 1/sigma-map for the current sample */
-      for (sigvigt=sigvig, wvig=sample->vigweight, i=nvpix; i--;) {
-	 *(sigvigt++) = sqrt(*(wvig++));
+      for (int i = 0; i < nvpix; i++) {
+	 sigvig[i] = sqrt(sample->vigweight[i]);
       }
 
       /*-- Go through each relevant PSF pixel */
       desmatt = desmat;
       desindext = desindex;
-      if (psf->pixmask) {
-	 /*---- Map the PSF model at the current position */
+      if (psf->pixmask) {		/*---- Map the PSF model at the current position */
 	 vignet_resample(psf->loc, psf->size[0], psf->size[1],
 			 vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
-	 /*---- Subtract the PSF model */
-	 for (vigt=vig, vigt2=sample->vig, i=nvpix; i--; vigt++) {
-	    *vigt = (float)(*(vigt2++) - *vigt*norm);
+	 for (int i=0; i < nvpix; i++) { /*---- Subtract the PSF model */
+	    vig[i] = (float)(sample->vig[i] - norm*vig[i]);
 	 }
-      } else {
-	 /*---- Simply copy the image data */
-	 for (vigt=vig, vigt2=sample->vig, i=nvpix; i--;) {
-	    *(vigt++) = (float)*(vigt2++);
+      } else {				/*---- Simply copy the image data */
+	 for (int i=0; i < nvpix; i++) {
+	    vig[i] = sample->vig[i];
 	 }
       }
       
-      for (i=0; i<npsf; i++) {
+      for (int i=0; i<npsf; i++) {
 	 /*---- Shift the current basis vector to the current PSF position */
 	 vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
 			 vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
 	 /*---- Retrieve coefficient for each relevant data pixel */
 	 for (vecvigt=vecvig, sigvigt=sigvig,
 		 desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;) {
-	    if (fabs(dval = *(vecvigt++) * *(sigvigt++)) > (1/BIG)) {
-	       *(desmatt2++) = norm*dval;
-	       *(desindext2++) = (j-jo);
+	    const double dval = *vecvigt++ * *sigvigt++;
+	    if (fabs(dval) > 1/BIG) {
+	       *desmatt2++ = norm*dval;
+	       *desindext2++ = j - jo;
 	       jo = j;
 	    }
 	 }
@@ -1087,7 +1086,7 @@ psf_refine(psfstruct *psf, setstruct *set)
 	   desmat0+=maxNvpixNdata, desindex0+=maxNvpixNdata, k++) {
 	 for (desmat02=desmat0, desindex02=desindex0, j=k; j<npsf;
 	      desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
-	    dval = 0.0;
+	    double dval = 0.0;
 	    desmatt=desmat0;
 	    desmatt2=desmat02;
 	    desindext=desindex0;
@@ -1110,24 +1109,25 @@ psf_refine(psfstruct *psf, setstruct *set)
 		  dindex = *(++desindext)-*(++desindext2);
 	       }
 	    }
-	    if (fabs(dval) > (1/BIG)) {
+	    if (fabs(dval) > 1/BIG) {
 	       alphamatt = alphamat+(j+k*npsf*ncoeff)*ncoeff;
 	       for (coeffmatt=coeffmat, l=ncoeff; l--; alphamatt+=matoffset) {
-		  for (i=ncoeff; i--;) {
+		  for (int i=ncoeff; i--;) {
 		     *(alphamatt++) += dval**(coeffmatt++);
 		  }
 	       }
 	    }
 	 }
-	 dval = 0.0;
+
 	 desmatt=desmat0;
 	 desindext=desindex0;
 	 bmatt=bmat-1;
+	 double dval = 0.0;
 	 while (*desindext) {
 	    dval += *(desmatt++)**(bmatt+=*(desindext++));
 	 }
-	 for (basist=basis,i=ncoeff; i--;) {
-	    *(betamatt++) += dval**(basist++);
+	 for (int i = 0; i < ncoeff; i++) {
+	    *betamatt++ += dval*basis[i];
 	 }
       }
    }
@@ -1145,7 +1145,7 @@ psf_refine(psfstruct *psf, setstruct *set)
    if (psf->pixmask) {
       tikfac= 0.01;
       tikfac = 1.0/(tikfac*tikfac);
-      for (i=0; i<nunknown; i++) {
+      for (int i=0; i<nunknown; i++) {
 	 alphamat[i+nunknown*i] += tikfac;
       }
    }
@@ -1199,14 +1199,14 @@ psf_refine(psfstruct *psf, setstruct *set)
       betamatt = poly_deortho(poly, betamat + j*ncoeff, betamat2);
       for (c=ncoeff; c--;) {
 	 vec = &psf->basis[j*npix];
-	 dval = *(betamatt++);
+	 const float dval = *(betamatt++);
 #pragma ivdep
-	 for (i=npix; i--;) {
+	 for (int i=npix; i--;) {
 	    *(ppix++) += dval**(vec++);
 	 }
 	 if (psf->basiscoeff) {
 	    /*---- Copy the basis coefficients (to be written later in PSF file) */
-	    *(bcoeff++) = (float)dval;
+	    *bcoeff++ = dval;
 	 }
       }
    }
