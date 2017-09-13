@@ -275,9 +275,9 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
 		float stepi)
 {
    static float	*statpix2;
-   double	*mask,*maskt, x, y;
+   double	*mask, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
-   int		*start,*startt, *nmask,*nmaskt;
+   int		*start,*nmask;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -357,9 +357,6 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    QMALLOC(start, int, nx2);		/* Int part of Im1 conv starts */
    /* Compute the local interpolant and data starting points in x */
    double x1 = xs1;
-   maskt = mask;
-   nmaskt = nmask;
-   startt = start;
    for (int j = 0; j < nx2; j++, x1 += step2) {
       const int ix1 = x1;
       int ix = ix1 - hmw;
@@ -376,19 +373,18 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       if (n > t) {
 	 n = t;
       }
-      *(startt++) = ix;
-      *(nmaskt++) = n;
+      start[j] = ix;
+      nmask[j] = n;
       double norm = 0.0;
       x = dxm;
       for (int i = 0; i < n; i++, x += dstepi) {
 	 double pval = INTERPF(x);
-	 *maskt++ = pval;
+	 mask[j*n + i] = pval;
 	 norm += pval;
       }
-      norm = norm>0.0? 1.0/norm : dstepi;
-      maskt -= n;
+      norm = (norm > 0.0) ? 1.0/norm : dstepi;
       for (int i = 0; i < n; i++) {
-	 *maskt++ *= norm;
+	 mask[j*n + i] *= norm;
       }
    }
    
@@ -397,17 +393,14 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    /* Make the interpolation in x (this includes transposition) */
    pixin0 = pix1+iys1a*w1;
    pixout0 = pix12;
-   for (int k=ny1; k--; pixin0+=w1, pixout0++) {
-      maskt = mask;
-      nmaskt = nmask;
-      startt = start;
+   for (int i = 0; i < ny1; i++, pixin0+=w1, pixout0++) {
       pixout = pixout0;
       for (int j = 0; j < nx2; j++, pixout+=ny1) {
-	 pixin = pixin0 + *(startt++);
+	 pixin = pixin0 + start[j];
 	 float val = 0.0; 
-	 for (int i = *nmaskt++; i--;) {
+	 for (int k = 0; k < nmask[j]; k++) {
 	    const double pval = *pixin++;
-	    val += pval*(*maskt++);
+	    val += pval*mask[j*nmask[j] + k];
 	 }
 	 *pixout = val;
       }
@@ -420,9 +413,6 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    
    /* Compute the local interpolant and data starting points in y */
    double y1 = ys1;
-   maskt = mask;
-   nmaskt = nmask;
-   startt = start;
    for (int j = 0; j < ny2; j++, y1 += step2) {
       const int iy1 = y1;
       int iy = iy1 - hmh;
@@ -439,19 +429,18 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       if (n > t) {
 	 n = t;
       }
-      *(startt++) = iy;
-      *(nmaskt++) = n;
+      start[j] = iy;
+      nmask[j] = n;
       double norm = 0.0;
       y = dym;
-      for (int i = 0; i < n; i++, y += dstepi) {
+      for (int k = 0; k < n; k++, y += dstepi) {
 	 const double pval = INTERPF(y);
-	 *maskt++ = pval;
+	 mask[j*n + k] = pval;
 	 norm += pval;
       }
-      norm = norm>0.0? 1.0/norm : dstepi;
-      maskt -= n;
-      for (int i = 0; i < n; i++) {
-	 *(maskt++) *= norm;
+      norm = (norm > 0.0) ? 1.0/norm : dstepi;
+      for (int k = 0; k < n; k++) {
+	 mask[j*n + k] *= norm;
       }
    }
    
@@ -466,17 +455,13 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    /* Make the interpolation in y  and transpose once again */
    pixin0 = pix12;
    pixout0 = pix2 + ixs2 + iys2*w2;
-   for (int k=nx2; k--; pixin0 += ny1, pixout0++) {
-      maskt = mask;
-      nmaskt = nmask;
-      startt = start;
+   for (int i = 0; i < nx2; i++, pixin0 += ny1, pixout0++) {
       pixout = pixout0;
-      for (int j=ny2; j--; pixout+=w2) {
-	 pixin = pixin0 + *(startt++);
+      for (int j = 0; j < ny2; j++, pixout += w2) {
+	 pixin = pixin0 + start[j];
 	 float val = 0.0; 
-	 for (int i= *nmaskt++; i--;) {
-	    const double pval = *pixin++;
-	    val += pval*(*maskt++);
+	 for (int k = 0; k < nmask[j]; k++) {
+	    val += pixin[k]*mask[j*nmask[j] + k];
 	 }
 	 *pixout = val;
       }
