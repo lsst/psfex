@@ -30,6 +30,7 @@
 #include        "config.h"
 #endif
 
+#include	<assert.h>
 #include	<math.h>
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -64,6 +65,7 @@ NOTES	-.
 AUTHOR	E. Bertin (IAP)
 VERSION	13/09/2010
  ***/
+#if 1
 int	ovignet_resample(const float *pix1, int w1, int h1,
 		float *pix2, int w2, int h2, double dx, double dy, float step2,
 		float stepi)
@@ -262,21 +264,20 @@ int	ovignet_resample(const float *pix1, int w1, int h1,
 
   return RETURN_OK;
   }
+#endif
 
 /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
 /*
  * Rewrite by RHL for clarity
  */
 int
-vignet_resample(const float *pix1, const int w1, const int h1, /* input */
-		float *pix2, const int w2, const int h2,       /* output */
+vignet_resample(const float *s_pix1, const int w1, const int h1, /* input */
+		float *s_pix2, const int w2, const int h2,       /* output */
 		const double dx, const double dy,
 		const float step2,
 		float stepi)
 {
-   static float	*statpix2;
-   double	x, y;
-   float	*pixin, *pixin0, *pixout, *pixout0;
+   static float	*stat_s_pix2 = NULL;	/* save an old version of s_pix2.  Scary! */
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -349,7 +350,27 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    /* Express everything relative to the effective Im1 start (with margin) */
    ny1 -= iys1a;
    ys1 -= (double)iys1a;
-   
+
+   /* Initialize destination buffer to zero if s_pix2 != NULL */
+   if (!s_pix2) {
+      assert(stat_s_pix2 != NULL);
+      s_pix2 = stat_s_pix2;
+   } else {
+      memset(s_pix2, 0, (size_t)(w2*h2)*sizeof(float));
+      stat_s_pix2 = s_pix2;
+   }
+
+   /* Allocate 2-D arrays for data */
+   float **pix1; QMALLOC(pix1, float *, h1);
+   for (int k = 0; k < h1; k++) {
+      pix1[k] = &s_pix1[k*w1];
+   }
+
+   float **pix2; QMALLOC(pix2, float *, h2);
+   for (int k = 0; k < h2; k++) {
+      pix2[k] = &s_pix2[k*w2];
+   }
+
    /* Allocate interpolant stuff for the x direction */
    double *s_mask; QMALLOC(s_mask, double, nx2*interpw); /* Storage for interpolation masks */
    double **mask; QMALLOC(mask, double *, nx2); /* interpolation masks */
@@ -381,7 +402,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       start[j] = ix;
       nmask[j] = n;
       double norm = 0.0;
-      x = dxm;
+      double x = dxm;
       for (int i = 0; i < n; i++, x += dstepi) {
 	 double pval = INTERPF(x);
 	 mask[j][i] = pval;
@@ -393,21 +414,21 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       }
    }
 
-   float *pix12; QCALLOC(pix12, float, nx2*ny1); /* Intermediary frame-buffer */
+   float *s_pix_tmp; QCALLOC(s_pix_tmp, float, nx2*ny1); /* Intermediary frame-buffer */
+   float **pix_tmp; QCALLOC(pix_tmp, float *, ny1);
+   for (int k = 0; k < ny1; k++) {
+      pix_tmp[k] = &s_pix_tmp[k*nx2];
+   }
 
    /* Make the interpolation in x (this includes transposition) */
-   pixin0 = pix1 + iys1a*w1;
-   pixout0 = pix12;
-   for (int i = 0; i < ny1; i++, pixin0 += w1, pixout0++) {
-      pixout = pixout0;
-      for (int j = 0; j < nx2; j++, pixout += ny1) {
-	 pixin = pixin0 + start[j];
+   for (int i = 0; i < ny1; i++) {
+      for (int j = 0; j < nx2; j++) {
 	 float val = 0.0; 
 	 for (int k = 0; k < nmask[j]; k++) {
-	    const double pval = *pixin++;
+	    const double pval = pix1[iys1a + i][start[j] + k];
 	    val += pval*mask[j][k];
 	 }
-	 *pixout = val;
+	 pix_tmp[i][j] = val;
       }
    }
   
@@ -442,7 +463,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       start[j] = iy;
       nmask[j] = n;
       double norm = 0.0;
-      y = dym;
+      double y = dym;
       for (int k = 0; k < n; k++, y += dstepi) {
 	 const double pval = INTERPF(y);
 	 mask[j][k] = pval;
@@ -454,31 +475,22 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       }
    }
    
-   /* Initialize destination buffer to zero if pix2 != NULL */
-   if (!pix2) {
-      pix2 = statpix2;
-   } else {
-      memset(pix2, 0, (size_t)(w2*h2)*sizeof(float));
-      statpix2 = pix2;
-   }
-   
    /* Make the interpolation in y  and transpose once again */
-   pixin0 = pix12;
-   pixout0 = pix2 + ixs2 + iys2*w2;
-   for (int i = 0; i < nx2; i++, pixin0 += ny1, pixout0++) {
-      pixout = pixout0;
-      for (int j = 0; j < ny2; j++, pixout += w2) {
-	 pixin = pixin0 + start[j];
+   for (int i = 0; i < nx2; i++) {
+      for (int j = 0; j < ny2; j++) {
 	 float val = 0.0; 
 	 for (int k = 0; k < nmask[j]; k++) {
-	    val += pixin[k]*mask[j][k];
+	    val += pix_tmp[start[j] + k][i]*mask[j][k];
 	 }
-	 *pixout = val;
+	 pix2[iys2 + j][ixs2 + i] = val;
       }
    }
    
    /* Free memory */
-   free(pix12);
+   free(s_pix_tmp);
+   free(pix_tmp);
+   free(pix1);
+   free(pix2);
    free(s_mask);
    free(mask);
    free(nmask);
