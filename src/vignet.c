@@ -274,8 +274,7 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    static float	*statpix2;
    double	*mask,*maskt, x, y;
    float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
-   int		i,j,k,n,t, *start,*startt, *nmask,*nmaskt,
-		ix,iy, ix1,iy1;
+   int		i,j,k,n, *start,*startt, *nmask,*nmaskt;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -299,8 +298,8 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       xs1 += dix2*step2;
    }
    int nx2 = (int)((w1 - 1 - xs1)/step2 + 1);/* nb of interpolated Im2 pixels along x */
-   int ix2;
-   if (nx2 > (ix2 = w2 - ixs2)) {
+   const int ix2 = w2 - ixs2;
+   if (nx2 > ix2) {
       nx2 = ix2;
    }
    if (nx2 <= 0) {
@@ -358,7 +357,8 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    nmaskt = nmask;
    startt = start;
    for (j=nx2; j--; x1+=step2) {
-      ix = (ix1=(int)x1) - hmw;
+      const int ix1 = x1;
+      int ix = ix1 - hmw;
       double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
       if (ix < 0) {
 	 n = interpw+ix;
@@ -367,8 +367,9 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
       } else {
 	 n = interpw;
       }
-      if (n>(t=w1-ix)) {
-	 n=t;
+      int t = w1 - ix;
+      if (n > t) {
+	 n = t;
       }
       *(startt++) = ix;
       *(nmaskt++) = n;
@@ -414,17 +415,19 @@ vignet_resample(const float *pix1, int w1, int h1, /* input */
    nmaskt = nmask;
    startt = start;
    for (j=ny2; j--; y1+=step2) {
-      iy = (iy1=(int)y1) - hmh;
+      const int iy1 = y1;
+      int iy = iy1 - hmh;
       double dym = (iy1 - y1 - hmh)*dstepi;/* starting point in the interp. func */
       if (iy < 0) {
-	 n = interph+iy;
+	 n = interph + iy;
 	 dym -= (double)iy*dstepi;
 	 iy = 0;
       } else {
 	 n = interph;
       }
-      if (n>(t=ny1-iy)) {
-	 n=t;
+      const int t = ny1 - iy;
+      if (n > t) {
+	 n = t;
       }
       *(startt++) = iy;
       *(nmaskt++) = n;
