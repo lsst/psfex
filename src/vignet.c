@@ -400,7 +400,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       startt = start;
       pixout = pixout0;
       for (int j=nx2; j--; pixout+=ny1) {
-	 pixin = pixin0+*(startt++);
+	 pixin = pixin0 + *(startt++);
 	 float val = 0.0; 
 	 for (int i = *nmaskt++; i--;) {
 	    const double pval = *pixin++;
@@ -463,16 +463,17 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    /* Make the interpolation in y  and transpose once again */
    pixin0 = pix12;
    pixout0 = pix2 + ixs2 + iys2*w2;
-   for (int k=nx2; k--; pixin0+=ny1, pixout0++) {
+   for (int k=nx2; k--; pixin0 += ny1, pixout0++) {
       maskt = mask;
       nmaskt = nmask;
       startt = start;
       pixout = pixout0;
       for (int j=ny2; j--; pixout+=w2) {
-	 pixin = pixin0+*(startt++);
+	 pixin = pixin0 + *(startt++);
 	 float val = 0.0; 
 	 for (int i= *nmaskt++; i--;) {
-	    val += *(maskt++)*(double)*(pixin++);
+	    const double pval = *pixin++;
+	    val += pval*(*maskt++);
 	 }
 	 *pixout = val;
       }
