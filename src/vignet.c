@@ -275,9 +275,8 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
 		float stepi)
 {
    static float	*statpix2;
-   double	*mask, x, y;
-   float	*pix12, *pixin,*pixin0, *pixout,*pixout0;
-   int		*start,*nmask;
+   double	x, y;
+   float	*pixin, *pixin0, *pixout, *pixout0;
 
    if (stepi <= 0.0) {
       stepi = 1.0;
@@ -352,9 +351,15 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    ys1 -= (double)iys1a;
    
    /* Allocate interpolant stuff for the x direction */
-   QMALLOC(mask, double, nx2*interpw);	/* Interpolation masks */
-   QMALLOC(nmask, int, nx2);		/* Interpolation mask sizes */
-   QMALLOC(start, int, nx2);		/* Int part of Im1 conv starts */
+   double *s_mask; QMALLOC(s_mask, double, nx2*interpw); /* Storage for interpolation masks */
+   double **mask; QMALLOC(mask, double *, nx2); /* interpolation masks */
+   for (int k = 0; k < nx2; k++) {
+      mask[k] = &s_mask[k*interpw];
+   }
+
+   int *nmask;   QMALLOC(nmask, int, nx2);	     /* Interpolation mask sizes */
+   int *start;   QMALLOC(start, int, nx2);	     /* Int part of Im1 conv starts */
+
    /* Compute the local interpolant and data starting points in x */
    double x1 = xs1;
    for (int j = 0; j < nx2; j++, x1 += step2) {
@@ -363,7 +368,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       double dxm = (ix1 - x1 - hmw)*dstepi;/* starting point in the interp. func */
       int n;
       if (ix < 0) {
-	 n = interpw+ix;
+	 n = interpw + ix;
 	 dxm -= (double)ix*dstepi;
 	 ix = 0;
       } else {
@@ -379,35 +384,40 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       x = dxm;
       for (int i = 0; i < n; i++, x += dstepi) {
 	 double pval = INTERPF(x);
-	 mask[j*n + i] = pval;
+	 mask[j][i] = pval;
 	 norm += pval;
       }
       norm = (norm > 0.0) ? 1.0/norm : dstepi;
       for (int i = 0; i < n; i++) {
-	 mask[j*n + i] *= norm;
+	 mask[j][i] *= norm;
       }
    }
-   
-   QCALLOC(pix12, float, nx2*ny1);	/* Intermediary frame-buffer */
+
+   float *pix12; QCALLOC(pix12, float, nx2*ny1); /* Intermediary frame-buffer */
 
    /* Make the interpolation in x (this includes transposition) */
-   pixin0 = pix1+iys1a*w1;
+   pixin0 = pix1 + iys1a*w1;
    pixout0 = pix12;
-   for (int i = 0; i < ny1; i++, pixin0+=w1, pixout0++) {
+   for (int i = 0; i < ny1; i++, pixin0 += w1, pixout0++) {
       pixout = pixout0;
-      for (int j = 0; j < nx2; j++, pixout+=ny1) {
+      for (int j = 0; j < nx2; j++, pixout += ny1) {
 	 pixin = pixin0 + start[j];
 	 float val = 0.0; 
 	 for (int k = 0; k < nmask[j]; k++) {
 	    const double pval = *pixin++;
-	    val += pval*mask[j*nmask[j] + k];
+	    val += pval*mask[j][k];
 	 }
 	 *pixout = val;
       }
    }
   
    /* Reallocate interpolant stuff for the y direction */
-   QREALLOC(mask, double, ny2*interph);	/* Interpolation masks */
+   QREALLOC(s_mask, double, ny2*interph);	/* Interpolation masks */
+   QREALLOC(mask, double *, ny2*interph);	/* Interpolation masks */
+   for (int k = 0; k < ny2; k++) {
+      mask[k] = &s_mask[k*interph];
+   }
+   
    QREALLOC(nmask, int, ny2);		/* Interpolation mask sizes */
    QREALLOC(start, int, ny2);		/* Int part of Im1 conv starts */
    
@@ -435,12 +445,12 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
       y = dym;
       for (int k = 0; k < n; k++, y += dstepi) {
 	 const double pval = INTERPF(y);
-	 mask[j*n + k] = pval;
+	 mask[j][k] = pval;
 	 norm += pval;
       }
       norm = (norm > 0.0) ? 1.0/norm : dstepi;
       for (int k = 0; k < n; k++) {
-	 mask[j*n + k] *= norm;
+	 mask[j][k] *= norm;
       }
    }
    
@@ -461,7 +471,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
 	 pixin = pixin0 + start[j];
 	 float val = 0.0; 
 	 for (int k = 0; k < nmask[j]; k++) {
-	    val += pixin[k]*mask[j*nmask[j] + k];
+	    val += pixin[k]*mask[j][k];
 	 }
 	 *pixout = val;
       }
@@ -469,6 +479,7 @@ vignet_resample(const float *pix1, const int w1, const int h1, /* input */
    
    /* Free memory */
    free(pix12);
+   free(s_mask);
    free(mask);
    free(nmask);
    free(start);
