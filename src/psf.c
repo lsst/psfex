@@ -580,10 +580,17 @@ void    psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
       *(weightt++) = norm2/noise2;
       }
 
-    for (i=0; i<poly->ndim; i++)
-      *(post++) = (sample->context[i]-set->contextoffset[i])
-                /set->contextscale[i];
-    }
+    if (poly->ndim)
+      {
+      for (i=0; i<poly->ndim; i++)
+	 *(post++) = (sample->context[i]-set->contextoffset[i])
+	    /set->contextscale[i];
+      }
+    else
+      {
+      *pos = 1.0;
+      }
+  }
 
 /* Make a polynomial fit to each pixel */
   for (i=0; i<npix; i++)
