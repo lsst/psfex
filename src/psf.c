@@ -958,12 +958,12 @@ psf_refine(psfstruct *psf, setstruct *set)
    double               pos[MAXCONTEXT];
    char                 str[MAXCHAR];
    double               *desmat,*desmatt,*desmatt2, *desmat0,*desmat02,
-                        *bmat,*bmatt, *basis,*basist,
-                        *sigvig,*sigvigt, *alphamat,*alphamatt,
-                        *betamat,*betamatt,*betamat2, *coeffmat,*coeffmatt,
+                        *bmat, *basis,
+                        *sigvig,*alphamat,*alphamatt,
+                        *betamat,*betamatt,*betamat2, *coeffmat,
                         dx,dy, norm, tikfac;
-   float                *vig,*vigt,
-                        *vecvig,*vecvigt, *ppix, *vec, *bcoeff,
+   float                *vig,
+                        *vecvig,*ppix, *vec, *bcoeff,
                         vigstep;
    int                  *desindex,*desindext,*desindext2,
                         *desindex0,*desindex02;
@@ -1040,8 +1040,6 @@ psf_refine(psfstruct *psf, setstruct *set)
       }
 
       /*-- Go through each relevant PSF pixel */
-      desmatt = desmat;
-      desindext = desindex;
       if (psf->pixmask) {		/*---- Map the PSF model at the current position */
 	 vignet_resample(psf->loc, psf->size[0], psf->size[1],
 			 vig, set->vigsize[0], set->vigsize[1], dx, dy, vigstep, 1.0);
@@ -1059,20 +1057,18 @@ psf_refine(psfstruct *psf, setstruct *set)
 	 vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
 			 vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
 	 /*---- Retrieve coefficient for each relevant data pixel */
-	 for (vecvigt=vecvig, sigvigt=sigvig,
-		 desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;) {
-	    const double dval = *vecvigt++ * *sigvigt++;
+	 for (j = jo = k = 0; j < nvpix; j++) {
+	    const double dval = vecvig[j]*sigvig[j];
 	    if (fabs(dval) > 1/BIG) {
-	       *desmatt2++ = norm*dval;
-	       *desindext2++ = j - jo;
-	       jo = j;
+	       const int ind = i*maxNvpixNdata + k;
+	       k++;
+	       desmat[ind] = norm*dval;
+	       desindex[ind] = j + 1 - jo;
+	       desindex[ind + 1] = 0;	/* marker for "end of block" */
+
+	       jo = j + 1;
 	    }
 	 }
-	 
-	 *desindext2 = 0;
-	 
-	 desindext += maxNvpixNdata;
-	 desmatt += maxNvpixNdata;
       }
 
       /*-- Fill the b matrix with data points */
@@ -1122,12 +1118,11 @@ psf_refine(psfstruct *psf, setstruct *set)
 	    }
 	 }
 
-	 desmatt=desmat0;
-	 desindext=desindex0;
-	 bmatt=bmat-1;
+	 double *bmatt = bmat - 1;
 	 double dval = 0.0;
-	 while (*desindext) {
-	    dval += *(desmatt++)**(bmatt+=*(desindext++));
+	 for (int i = 0; desindex0[i] != 0; i++) {
+	    bmatt += desindex0[i];
+	    dval += *bmatt*desmat0[i];
 	 }
 	 for (int i = 0; i < ncoeff; i++) {
 	    *betamatt++ += dval*basis[i];
