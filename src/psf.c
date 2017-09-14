@@ -34,6 +34,7 @@
 #include        <stdio.h>
 #include        <stdlib.h>
 #include        <string.h>
+#include        <assert.h>
 
 #include        "define.h"
 #include        "types.h"
@@ -1072,21 +1073,21 @@ psf_refine(psfstruct *psf, setstruct *set)
 	 double *desmat02 = desmat0;
 	 int *desindex02 = desindex0;
 	 for (int j = k; j < npsf; desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
-	    double dval = 0.0;
 	    double *desmatt=desmat0;
 	    double *desmatt2=desmat02;
 	    int *desindext=desindex0;
 	    int *desindext2=desindex02;
 	    int dindex = *desindext - *desindext2;
 
+	    double dval = 0.0;
 	    while (*desindext && *desindext2) {
 	       while (*desindext && dindex < 0) {
 		  dindex+=*(++desindext);
 		  desmatt++;
 	       }
 	       
-	       while (*desindext2 && dindex>0) {
-		  dindex-=*(++desindext2);
+	       while (*desindext2 && dindex> 0) {
+		  dindex -= *(++desindext2);
 		  desmatt2++;
 	       }
 	       
@@ -1127,12 +1128,30 @@ psf_refine(psfstruct *psf, setstruct *set)
    free(vig);
    free(sigvig);
 
+#if DUMP_IMAGES				/* dump the normal equations */
+   {
+      float *tmp = malloc(nunknown*nunknown*sizeof(float)); /* we only write floats to files */
+      assert(tmp);
+
+      for (int i = 0; i != nunknown; i++) {
+	 tmp[i] = betamat[i];
+      }
+      write_fits_image("beta.fits", tmp, 1, nunknown, npsf, ncoeff);
+
+      for (int i = 0; i != nunknown*nunknown; i++) {
+	 tmp[i] = alphamat[i];
+      }
+      write_fits_image("alpha.fits", tmp, nunknown, nunknown, npsf, ncoeff);
+      free(tmp);
+   }
+#endif
+
    /* Basic Tikhonov regularisation */
    if (psf->pixmask) {
       double tikfac = 0.01;
       tikfac = 1.0/(tikfac*tikfac);
-      for (int i = 0; i<nunknown; i++) {
-	 alphamat[i+nunknown*i] += tikfac;
+      for (int i = 0; i < nunknown; i++) {
+	 alphamat[i*nunknown + i] += tikfac;
       }
    }
 
