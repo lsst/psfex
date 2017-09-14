@@ -953,63 +953,52 @@ VERSION 02/04/2013
 int
 psf_refine(psfstruct *psf, setstruct *set)
 {
-   polystruct           *poly;
-   samplestruct         *sample;
-   double               pos[MAXCONTEXT];
    char                 str[MAXCHAR];
-   double               *desmat, *bmat, *basis,
-                        *sigvig,*alphamat,
-                        *betamat,*betamat2, *coeffmat,
-                        dx,dy, norm;
-   float                *vig,
-                        *vecvig, *vec,
-                        vigstep;
-   int                  *desindex;
-   int                  npix,nvpix, ndata,ncoeff,nsample,npsf,
-                        ncontext, nunknown, matoffset;
+   double               dx,dy, norm;
 
    /* Exit if no pixel is to be "refined" or if no sample is available */
    if (!set->nsample || !psf->basis) {
       return RETURN_ERROR;
    }
    
-   npix = psf->size[0]*psf->size[1];
-   nvpix = set->vigsize[0]*set->vigsize[1];
-   vigstep = 1/psf->pixstep;
+   const int npix = psf->size[0]*psf->size[1];
+   const int nvpix = set->vigsize[0]*set->vigsize[1];
+   const float vigstep = 1/psf->pixstep;
 
-   npsf = psf->nbasis;
-   ndata = psf->ndata ? psf->ndata : set->vigsize[0]*set->vigsize[1] + 1;
-   poly = psf->poly;
-   ncontext = set->ncontext;
-   ncoeff = poly->ncoeff;
-   nsample = set->nsample;
-   nunknown = ncoeff*npsf;
+   const int npsf = psf->nbasis;
+   const int ndata = psf->ndata ? psf->ndata : set->vigsize[0]*set->vigsize[1] + 1;
+   polystruct *const poly = psf->poly;
+   const int ncontext = set->ncontext;
+   const int ncoeff = poly->ncoeff;
+   const int nsample = set->nsample;
+   const int nunknown = ncoeff*npsf;
 
    /* Prepare a vignet that will contain each projected basis vector */
+   float *vecvig;
    QCALLOC(vecvig, float, nvpix);
 
    //  NFPRINTF(OUTPUT,"Processing samples...");
-   matoffset =nunknown-ncoeff;           /* Offset between matrix coeffs */
+   const int matoffset = nunknown - ncoeff; /* Offset between matrix coeffs */
    /* Set-up the (compressed) design matrix and data vector */
    const int maxNvpixNdata = (nvpix > ndata) ? nvpix : ndata;
-   QCALLOC(desmat, double, npsf*maxNvpixNdata);
-   QCALLOC(desindex, int, npsf*maxNvpixNdata);
-   QMALLOC(bmat, double, nvpix);
+   double *desmat; QCALLOC(desmat, double, npsf*maxNvpixNdata);
+   int *desindex; QCALLOC(desindex, int, npsf*maxNvpixNdata);
+   double *bmat; QMALLOC(bmat, double, nvpix);
    /* ... a matrix containing the context coefficient submatrix... */
-   QMALLOC(coeffmat, double, ncoeff*ncoeff);
+   double *coeffmat; QMALLOC(coeffmat, double, ncoeff*ncoeff);
    /* ... a vignet that will contain the current vignet residuals... */
-   QMALLOC(vig, float, nvpix);
+   float *vig; QMALLOC(vig, float, nvpix);
    /* ... a vignet that will contain the current 1/sigma map... */
-   QMALLOC(sigvig, double, nvpix);
+   double *sigvig; QMALLOC(sigvig, double, nvpix);
    /* ... and allocate some more for storing the normal equations */
-   QCALLOC(alphamat, double, nunknown*nunknown);
-   QCALLOC(betamat, double, nunknown);
+   double *alphamat; QCALLOC(alphamat, double, nunknown*nunknown);
+   double *betamat; QCALLOC(betamat, double, nunknown);
    /*
      psf_orthopoly(psf, set);
    */
    /* Go through each sample */
    for (int n=0; n<nsample; n++) {
-      sample=set->sample[n];
+      samplestruct *sample=set->sample[n];
       sprintf(str, "Processing sample #%d", n+1);
       //    NFPRINTF(OUTPUT, str);
       /*-- Delta-x and Delta-y in PSF-pixel units */
@@ -1018,13 +1007,15 @@ psf_refine(psfstruct *psf, setstruct *set)
       norm = (double)sample->norm;
 
       /*-- Build the local PSF */
-      for (int i=0; i<ncontext; i++) {
-	 pos[i] = (sample->context[i]-set->contextoffset[i])/set->contextscale[i];
+      {
+	 double pos[MAXCONTEXT];
+	 for (int i=0; i<ncontext; i++) {
+	    pos[i] = (sample->context[i]-set->contextoffset[i])/set->contextscale[i];
+	 }
+	 psf_build(psf, pos);
       }
-      psf_build(psf, pos);
-
       /*-- Build the current context coefficient sub-matrix */
-      basis = poly_ortho(poly, poly->basis, poly->orthobasis);
+      double *basis = poly_ortho(poly, poly->basis, poly->orthobasis);
       for (int l = 0; l < ncoeff; l++) {
 	 const double dval = basis[l];
 	 for (int i= 0; i < ncoeff; i++) {
@@ -1187,12 +1178,13 @@ psf_refine(psfstruct *psf, setstruct *set)
       memset(psf->comp, 0, npix*ncoeff*sizeof(float));
       QMALLOC(psf->basiscoeff, float, nunknown);
    }
+   double *betamat2;
    QMALLOC(betamat2, double, ncoeff);
    for (int j = 0; j < npsf; j++) {
       float *ppix = psf->comp;
       double *betamatt = poly_deortho(poly, betamat + j*ncoeff, betamat2);
       for (int c = 0; c < ncoeff; c++) {
-	 vec = &psf->basis[j*npix];
+	 float *vec = &psf->basis[j*npix];
 	 const float dval = betamatt[c];
 #pragma ivdep
 	 for (int i = 0; i < npix; i++) {
