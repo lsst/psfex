@@ -6,18 +6,47 @@
 
 #define FITS_SIZE 2880
 
+
+/*****************************************************************************/
+/*
+ * Write a floating value
+ */
+static int
+write_card_f(FILE *fd,
+	     int ncard,
+	     char *record,
+	     char *keyword,
+	     float val,
+	     char *commnt)
+{
+   char *card = &record[80*ncard];
+
+   sprintf(card,"%-8.8s= %20g %c%-48s",keyword,val,
+	   		(commnt[0] == '\0' ? ' ' : '/'),commnt);
+/*
+ * Write record if full
+ */
+   if(++ncard == 36) {
+      if(fwrite(record, FITS_SIZE, 1, fd) != 1) {
+	 fprintf(stderr, "Cannot write header record\n");
+      }
+      ncard = 0;
+   }
+   
+   return(ncard);
+}   
+
 /*****************************************************************************/
 /*
  * Write a string value
  */
 static int
-write_card_s(fd, ncard, record, keyword, val, commnt)
-FILE *fd;
-int ncard;
-char *record;
-char *keyword;
-char *val;
-char *commnt;
+write_card_s(FILE *fd,
+	     int ncard,
+	     char *record,
+	     char *keyword,
+	     char *val,
+	     char *commnt)
 {
    char *card = &record[80*ncard];
    char value[20];			/* blank-padded val, if needed */
@@ -56,13 +85,12 @@ char *commnt;
  * Write an integer (%d)
  */
 static int
-write_card_d(fd, ncard, record, keyword, val, commnt)
-FILE *fd;
-int ncard;
-char *record;
-char *keyword;
-int val;
-char *commnt;
+write_card_d(FILE *fd,
+	     int ncard,
+	     char *record,
+	     char *keyword,
+	     int val,
+	     char *commnt)
 {
    char *card = &record[80*ncard];
 
@@ -86,13 +114,12 @@ char *commnt;
  * Write a logical value
  */
 static int
-write_card_l(fd, ncard, record, keyword, val, commnt)
-FILE *fd;
-int ncard;
-char *record;
-char *keyword;
-char *val;
-char *commnt;
+write_card_l(FILE *fd,
+	     int ncard,
+	     char *record,
+	     char *keyword,
+	     char *val,
+	     char *commnt)
 {
    char *card = &record[80*ncard];
 
@@ -139,8 +166,8 @@ swap_4(char *arr,			// array to swap
 void
 write_fits_image(const char *filename,
 		 float *data,
-		 int nx,
-		 int ny)
+		 int nx, int ny,
+		 float xc, float yc)
 {
    FILE *fd;				/* file descriptor */
    
@@ -158,6 +185,8 @@ write_fits_image(const char *filename,
    ncard = write_card_d(fd,ncard,record,"NAXIS",2,"");
    ncard = write_card_d(fd,ncard,record,"NAXIS1",nx,"");
    ncard = write_card_d(fd,ncard,record,"NAXIS2",ny,"");
+   ncard = write_card_f(fd,ncard,record,"XC",xc,"");
+   ncard = write_card_f(fd,ncard,record,"YC",yc,"");
    ncard = write_card_s(fd,ncard,record,"END","","");
       
    while(ncard != 0) {

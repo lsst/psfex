@@ -602,7 +602,7 @@ void    psf_make(psfstruct *psf, setstruct *set, double prof_accuracy)
     {
        char fileName[80];
        sprintf(fileName, "resampledImage_%d.fits", n);
-       write_fits_image(fileName, &image[n*npix], psf->size[0], psf->size[1]);
+       write_fits_image(fileName, &image[n*npix], psf->size[0], psf->size[1], sample->dx, sample->dy);
     }	  
 #endif
   }
@@ -1010,7 +1010,7 @@ psf_refine(psfstruct *psf, setstruct *set)
      psf_orthopoly(psf, set);
    */
    /* Go through each sample */
-   for (int n=0; n < nsample; n++) {
+   for (int n=0; n<nsample; n++) {
       sample=set->sample[n];
       sprintf(str, "Processing sample #%d", n+1);
       //    NFPRINTF(OUTPUT, str);
@@ -1020,7 +1020,7 @@ psf_refine(psfstruct *psf, setstruct *set)
       norm = (double)sample->norm;
 
       /*-- Build the local PSF */
-      for (int i=0; i < ncontext; i++) {
+      for (int i=0; i<ncontext; i++) {
 	 pos[i] = (sample->context[i]-set->contextoffset[i])/set->contextscale[i];
       }
       psf_build(psf, pos);
