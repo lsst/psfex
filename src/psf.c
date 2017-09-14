@@ -1027,10 +1027,10 @@ psf_refine(psfstruct *psf, setstruct *set)
 
       /*-- Build the current context coefficient sub-matrix */
       basis = poly_ortho(poly, poly->basis, poly->orthobasis);
-      for (basist=basis, coeffmatt=coeffmat, l = 0; l < ncoeff; l++) {
-	 const double dval = *basist++;
+      for (l = 0; l < ncoeff; l++) {
+	 const double dval = basis[l];
 	 for (int i= 0; i < ncoeff; i++) {
-	    *(coeffmatt++) = dval*basis[i];
+	    coeffmat[l*ncoeff + i] = dval*basis[i];
 	 }
       }
 
@@ -1076,22 +1076,24 @@ psf_refine(psfstruct *psf, setstruct *set)
       }
 
       /*-- Fill the b matrix with data points */
-      for (vigt=vig, sigvigt=sigvig, bmatt=bmat, j=nvpix; j--;) {
-	 *(bmatt++) = *(vigt++) * *(sigvigt++);
+      for (j=0; j < nvpix; j++) {
+	 bmat[j] = vig[j]*sigvig[j];
       }
 
       /*-- Compute the matrix of normal equations */
       betamatt = betamat;
-      for (desmat0=desmat, desindex0=desindex, k=0; k<npsf;
-	   desmat0+=maxNvpixNdata, desindex0+=maxNvpixNdata, k++) {
-	 for (desmat02=desmat0, desindex02=desindex0, j=k; j<npsf;
-	      desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
+
+      desmat0=desmat; desindex0=desindex;
+      for (k=0; k < npsf; desmat0+=maxNvpixNdata, desindex0+=maxNvpixNdata, k++) {
+	 desmat02 = desmat0;
+	 desindex02 = desindex0;
+	 for (j=k; j < npsf; desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
 	    double dval = 0.0;
 	    desmatt=desmat0;
 	    desmatt2=desmat02;
 	    desindext=desindex0;
 	    desindext2=desindex02;
-	    dindex=*desindext-*desindext2;
+	    dindex = *desindext - *desindext2;
 
 	    while (*desindext && *desindext2) {
 	       while (*desindext && dindex<0) {
@@ -1105,15 +1107,16 @@ psf_refine(psfstruct *psf, setstruct *set)
 	       }
 	       
 	       while (*desindext && !dindex) {
-		  dval += *(desmatt++)**(desmatt2++);
-		  dindex = *(++desindext)-*(++desindext2);
+		  dval += (*desmatt++)*(*desmatt2++);
+		  dindex = *(++desindext) - *(++desindext2);
 	       }
 	    }
+
 	    if (fabs(dval) > 1/BIG) {
-	       alphamatt = alphamat+(j+k*npsf*ncoeff)*ncoeff;
-	       for (coeffmatt=coeffmat, l=ncoeff; l--; alphamatt+=matoffset) {
-		  for (int i=ncoeff; i--;) {
-		     *(alphamatt++) += dval**(coeffmatt++);
+	       alphamatt = alphamat + (j + k*npsf*ncoeff)*ncoeff;
+	       for (l=0; l < ncoeff; l++) {
+		  for (int i=0; i < ncoeff; i++) {
+		     alphamatt[l*matoffset + i] += dval*coeffmat[i];
 		  }
 	       }
 	    }
