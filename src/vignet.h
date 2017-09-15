@@ -37,18 +37,20 @@
 #define	INTERPFAC	3.0	/* Interpolation envelope factor */
 #endif
 
-#define	INTERPF(x)	(x<1e-5 && x>-1e-5? 1.0 \
+#define	INTERPF_LANCZOS(x)	(x<1e-5 && x>-1e-5? 1.0 \
 			:(x>INTERPFAC?0.0:(x<-INTERPFAC?0.0 \
 			:sin(PI*x)*sin(PI/INTERPFAC*x)/(PI*PI/INTERPFAC*x*x))))
 
-//#define	INTERPF(x)	(fabs(x)>1.0?0.0 : 1 - fabs(x))
-//#define	INTERPF(x)	(fabs(x)>0.5? 0.0:1.0)
+#define	INTERPF_LINEAR(x)	(fabs(x)>1.0?0.0 : 1 - fabs(x))
+#define	INTERPF_NEAREST(x)	(fabs(x)>0.5? 0.0:1.0)
+
 /*
-#define	INTERPF(x)	(x==0.0?1.0 \
+#define	INTERPF_SINCEXP(x)	(x==0.0?1.0 \
 			:(x>INTERPLIM?0.0:(x<-INTERPLIM?0.0 \
 			:sin(PI*x)*exp(-x*x/4.4)/(PI*x))))
 */
-				/* Lanczos approximation */
+				/* Use Lanczos approximation */
+#define INTERPF INTERPF_LANCZOS
 
 /*--------------------------------- typedefs --------------------------------*/
 
@@ -62,7 +64,11 @@ extern int	vignet_copy(float *pix1, int w1, int h1,
 		vignet_resample(const float *pix1, const int w1, const int h1,
                                 float *pix2, const int w2, const int h2,
                                 const double dx, const double dy,
-                                const float step2, float stepi);
+                                const float step2, float stepi),
+		vignet_resample_pixel(const float *pix1, const int w1, const int h1,
+                                      float *pix2, const int w2, const int h2,
+                                      const double dx, const double dy,
+                                      const float step2, float stepi);
 
 extern float	vignet_aperflux(float *ima, float *var, int w, int h,
 			float dxc, float dyc, float aper,
