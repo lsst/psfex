@@ -974,8 +974,7 @@ psf_refine(psfstruct *psf, setstruct *set)
    const int nunknown = ncoeff*npsf;
 
    /* Prepare a vignet that will contain each projected basis vector */
-   float *vecvig;
-   QCALLOC(vecvig, float, nvpix);
+   float *basisvig; QCALLOC(basisvig, float, nvpix);
 
    //  NFPRINTF(OUTPUT,"Processing samples...");
    const int matoffset = nunknown - ncoeff; /* Offset between matrix coeffs */
@@ -989,13 +988,21 @@ psf_refine(psfstruct *psf, setstruct *set)
    /* ... a vignet that will contain the current vignet residuals... */
    float *vig; QMALLOC(vig, float, nvpix);
    /* ... a vignet that will contain the current 1/sigma map... */
-   double *sigvig; QMALLOC(sigvig, double, nvpix);
+   double *isigvig; QMALLOC(isigvig, double, nvpix);
    /* ... and allocate some more for storing the normal equations */
    double *alphamat; QCALLOC(alphamat, double, nunknown*nunknown);
    double *betamat; QCALLOC(betamat, double, nunknown);
    /*
      psf_orthopoly(psf, set);
    */
+#if DUMP_BASIS
+   for (int j = 0; j < npsf; j++) {
+      char fileName[80];
+      sprintf(fileName, "basisImage_%d.fits", j);
+      
+      write_fits_image(fileName, &psf->basis[j*npix], psf->size[0], psf->size[1], j, n);
+   }
+#endif
    /* Go through each sample */
    for (int n = 0; n < nsample; n++) {
       const samplestruct *const sample = set->sample[n];
@@ -1025,7 +1032,7 @@ psf_refine(psfstruct *psf, setstruct *set)
 
       /*-- Precompute the 1/sigma-map for the current sample */
       for (int i = 0; i < nvpix; i++) {
-	 sigvig[i] = sqrt(sample->vigweight[i]);
+	 isigvig[i] = sqrt(sample->vigweight[i]);
       }
 
       /*-- Go through each relevant PSF pixel */
@@ -1044,10 +1051,26 @@ psf_refine(psfstruct *psf, setstruct *set)
       for (int i = 0; i < npsf; i++) {
 	 /*---- Shift the current basis vector to the current PSF position */
 	 vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
-			 vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+			 basisvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+#if DUMP_IMAGES
+	 if (n == 0) {
+	    char fileName[80];
+	    sprintf(fileName, "residualImage_%d.fits", i);
+	    
+	    write_fits_image(fileName, vig, set->vigsize[0], set->vigsize[1], i, n);
+	 }
+#endif
+#if DUMP_BASIS
+	 if (n == 0) {
+	    char fileName[80];
+	    sprintf(fileName, "basisImage_%d.fits", i);
+	    
+	    write_fits_image(fileName, basisvig, set->vigsize[0], set->vigsize[1], i, n);
+	 }
+#endif
 	 /*---- Retrieve coefficient for each relevant data pixel */
 	 for (int j = 0, jo = 0, k = 0; j < nvpix; j++) {
-	    const double dval = vecvig[j]*sigvig[j];
+	    const double dval = basisvig[j]*isigvig[j];
 	    if (fabs(dval) > 1/BIG) {
 	       const int ind = i*maxNvpixNdata + k;
 	       k++;
@@ -1062,38 +1085,37 @@ psf_refine(psfstruct *psf, setstruct *set)
 
       /*-- Fill the b matrix with data points */
       for (int j = 0; j < nvpix; j++) {
-	 bmat[j] = vig[j]*sigvig[j];
+	 bmat[j] = vig[j]*isigvig[j];
       }
 
       /*-- Compute the matrix of normal equations */
 
-      double *desmat0 = desmat;
-      int *desindex0 = desindex;
-      for (int k=0; k < npsf; desmat0+=maxNvpixNdata, desindex0+=maxNvpixNdata, k++) {
-	 double *desmat02 = desmat0;
-	 int *desindex02 = desindex0;
-	 for (int j = k; j < npsf; desmat02+=maxNvpixNdata, desindex02+=maxNvpixNdata, j++) {
-	    double *desmatt=desmat0;
-	    double *desmatt2=desmat02;
-	    int *desindext=desindex0;
-	    int *desindext2=desindex02;
-	    int dindex = *desindext - *desindext2;
-
+      for (int k=0; k < npsf; k++) {
+	 for (int j = k; j < npsf; j++) {
 	    double dval = 0.0;
-	    while (*desindext && *desindext2) {
-	       while (*desindext && dindex < 0) {
-		  dindex+=*(++desindext);
-		  desmatt++;
-	       }
+	    {
+	       double *desmatt =  &desmat[k*maxNvpixNdata]; /* n.b. j and k in these two lines */
+	       double *desmatt2 = &desmat[j*maxNvpixNdata];
+
+	       int *desindext =  &desindex[k*maxNvpixNdata];
+	       int *desindext2 = &desindex[j*maxNvpixNdata];
+	       int dindex = *desindext - *desindext2;
+
+	       while (*desindext && *desindext2) {
+		  while (*desindext && dindex < 0) {
+		     dindex += *(++desindext);
+		     desmatt++;
+		  }
 	       
-	       while (*desindext2 && dindex> 0) {
-		  dindex -= *(++desindext2);
-		  desmatt2++;
-	       }
+		  while (*desindext2 && dindex> 0) {
+		     dindex -= *(++desindext2);
+		     desmatt2++;
+		  }
 	       
-	       while (*desindext && !dindex) {
-		  dval += (*desmatt++)*(*desmatt2++);
-		  dindex = *(++desindext) - *(++desindext2);
+		  while (*desindext && !dindex) {
+		     dval += (*desmatt++)*(*desmatt2++);
+		     dindex = *(++desindext) - *(++desindext2);
+		  }
 	       }
 	    }
 
@@ -1109,9 +1131,9 @@ psf_refine(psfstruct *psf, setstruct *set)
 
 	 double *bmatt = bmat - 1;
 	 double dval = 0.0;
-	 for (int i = 0; desindex0[i] != 0; i++) {
-	    bmatt += desindex0[i];
-	    dval += *bmatt*desmat0[i];
+	 for (int i = 0; desindex[k*maxNvpixNdata + i] != 0; i++) {
+	    bmatt += desindex[k*maxNvpixNdata + i];
+	    dval += *bmatt*desmat[k*maxNvpixNdata + i];
 	 }
 	 for (int i = 0; i < ncoeff; i++) {
 	    betamat[k*ncoeff + i] += dval*basis[i];
@@ -1124,9 +1146,9 @@ psf_refine(psfstruct *psf, setstruct *set)
    free(desmat);
    free(desindex);
    free(bmat);
-   free(vecvig);
+   free(basisvig);
    free(vig);
-   free(sigvig);
+   free(isigvig);
 
 #if DUMP_IMAGES				/* dump the normal equations */
    {
