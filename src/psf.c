@@ -1319,6 +1319,7 @@ void    psf_makebasis(psfstruct *psf, setstruct *set,
 
   npix = psf->size[0]*psf->size[1];
 
+  psf->basis_type = basis_type;
   switch(basis_type)
     {
     case BASIS_NONE:
