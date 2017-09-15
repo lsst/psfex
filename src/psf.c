@@ -67,11 +67,15 @@
 #include LAPACK_STUB_H
 #endif
 
-#define DUMP_IMAGES 1
+//#define DUMP_BASIS  1
+//#define DUMP_IMAGES 1
+#if !defined(DUMP_BASIS)
+#   define DUMP_BASIS 0
+#endif
 #if !defined(DUMP_IMAGES)
 #   define DUMP_IMAGES 0
 #endif
-#if DUMP_IMAGES
+#if DUMP_IMAGES || DUMP_BASIS
 #include "fits_debug.h"
 #endif
 
@@ -1050,8 +1054,13 @@ psf_refine(psfstruct *psf, setstruct *set)
       
       for (int i = 0; i < npsf; i++) {
 	 /*---- Shift the current basis vector to the current PSF position */
-	 vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
-			 basisvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+	 if (psf->basis_type == BASIS_PIXEL) {
+	    vignet_resample_pixel(&psf->basis[i*npix], psf->size[0], psf->size[1],
+				  basisvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+	 } else {
+	    vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
+			    basisvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+	 }
 #if DUMP_IMAGES
 	 if (n == 0) {
 	    char fileName[80];
@@ -1061,10 +1070,10 @@ psf_refine(psfstruct *psf, setstruct *set)
 	 }
 #endif
 #if DUMP_BASIS
-	 if (n == 0) {
+	 if (n == 17) {
 	    char fileName[80];
 	    sprintf(fileName, "basisImage_%d.fits", i);
-	    
+
 	    write_fits_image(fileName, basisvig, set->vigsize[0], set->vigsize[1], i, n);
 	 }
 #endif
