@@ -91,6 +91,7 @@ typedef struct psf
   int		samples_accepted;/* Number of detections accepted */
   double	chi2;		/* chi2/d.o.f. */
   float		fwhm;		/* Initial guess of the FWHM */
+  basistypenum  basis_type;     /* type of basis */
   int		*pixmask;	/* Pixel mask for local bases */
   float		*basis;		/* Basis vectors */
   float		*basiscoeff;	/* Basis vector coefficients */
