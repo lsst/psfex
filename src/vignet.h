@@ -29,19 +29,25 @@
 /*----------------------------- Internal constants --------------------------*/
 
 #define APER_OVERSAMP	5	/* oversampling in each dimension (MAG_APER) */
-#if 0
+#if 1
+#define	INTERPW		6	/* Interpolation function range */
+#define	INTERPFAC	3.0	/* Interpolation envelope factor */
+#elif 1
+#define	INTERPW		9	/* Interpolation function range */
+#define	INTERPFAC	5.0	/* Interpolation envelope factor */
+#elif 0
 #define	INTERPW		12	/* Interpolation function range */
 #define	INTERPFAC	7.0	/* Interpolation envelope factor */
 #else
-#define	INTERPW		6	/* Interpolation function range */
-#define	INTERPFAC	3.0	/* Interpolation envelope factor */
+#define	INTERPW		18	/* Interpolation function range */
+#define	INTERPFAC	9.0	/* Interpolation envelope factor */
 #endif
 
 #define	INTERPF_LANCZOS(x)	(x<1e-5 && x>-1e-5? 1.0 \
 			:(x>INTERPFAC?0.0:(x<-INTERPFAC?0.0 \
 			:sin(PI*x)*sin(PI/INTERPFAC*x)/(PI*PI/INTERPFAC*x*x))))
 
-#define	INTERPF_LINEAR(x)	(fabs(x)>1.0?0.0 : 1 - fabs(x))
+#define	INTERPF_LINEAR(x)	((fabs(x) > 1.0) ? 0.0 : 1 - fabs(x))
 #define	INTERPF_NEAREST(x)	(fabs(x)>0.5? 0.0:1.0)
 
 /*
