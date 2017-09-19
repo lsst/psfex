@@ -32,7 +32,7 @@
 #if 0
 #define	INTERPW		6	/* Interpolation function range */
 #define	INTERPFAC	3.0	/* Interpolation envelope factor */
-#elif 0
+#elif 1
 #define	INTERPW		9	/* Interpolation function range */
 #define	INTERPFAC	5.0	/* Interpolation envelope factor */
 #elif 0
