@@ -495,7 +495,7 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
     }
   psf_refine(psf, set);
 
-#if 1					/* RHL */
+#if 0					/* RHL */
   printf("Not using multiple make/refine passes\n");
 #else
 /* Remove bad PSF candidates */
