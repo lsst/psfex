@@ -1002,9 +1002,16 @@ psf_refine(psfstruct *psf, setstruct *set)
 #if DUMP_BASIS
    for (int j = 0; j < npsf; j++) {
       char fileName[80];
-      sprintf(fileName, "basisImage_%d.fits", j);
+      sprintf(fileName, "pixelMask_%d.fits", j);
       
-      write_fits_image(fileName, &psf->basis[j*npix], psf->size[0], psf->size[1], j, n);
+      float *tmp = malloc(psf->size[0]*psf->size[1]*sizeof(float)); /* we only write floats to files */
+      assert(tmp);
+
+      for (int i = 0; i != psf->size[0]*psf->size[1]; i++) {
+	 tmp[i] = psf->pixmask[i];
+      }
+      write_fits_image(fileName, tmp, psf->size[0], psf->size[1], j, 0);
+      free(tmp);
    }
 #endif
    /* Go through each sample */
@@ -1364,6 +1371,13 @@ void    psf_makebasis(psfstruct *psf, setstruct *set,
       y = -yc;
       rmax2 = (psf->size[0]<psf->size[1]? (double)(psf->size[0]/2)
                                 : (double)(psf->size[1]/2))+0.5;
+#if 0
+      const float r = sqrt(nvec*nvec/PI); /* use a circular mask irrespective of S/N */
+      if (r < rmax2) {			  /* currently rmax2 is a radius.  Sigh */
+	 rmax2 = r;
+	 psfthresh = -1;
+      }
+#endif
       rmax2 *= rmax2;
       for (iy=psf->size[1]; iy--; y+=1.0)
         {
@@ -1379,6 +1393,19 @@ void    psf_makebasis(psfstruct *psf, setstruct *set,
               }
         }
       psf->nbasis = npsf;
+      {
+	 char fileName[80];
+	 sprintf(fileName, "pixelMask.fits");
+      
+	 float *tmp = malloc(psf->size[0]*psf->size[1]*sizeof(float)); /* we only write floats to files */
+	 assert(tmp);
+
+	 for (int i = 0; i != psf->size[0]*psf->size[1]; i++) {
+	    tmp[i] = psfmask[i];
+	 }
+	 write_fits_image(fileName, tmp, psf->size[0], psf->size[1], 0, 0);
+	 free(tmp);
+      }
 /*---- Prepare a PSF mask that will contain Dirac peaks only... */
       QCALLOC(psf->basis, float, npsf*npix);
       basis = psf->basis;
