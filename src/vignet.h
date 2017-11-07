@@ -29,7 +29,7 @@
 /*----------------------------- Internal constants --------------------------*/
 
 #define APER_OVERSAMP	5	/* oversampling in each dimension (MAG_APER) */
-#if 1
+#if 0
 #define	INTERPW		6	/* Interpolation function range */
 #define	INTERPFAC	3.0	/* Interpolation envelope factor */
 #elif 1
