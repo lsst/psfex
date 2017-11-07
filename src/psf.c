@@ -1139,7 +1139,7 @@ psf_refine(psfstruct *psf, setstruct *set)
 	       double *alphamatt = alphamat + (j + k*npsf*ncoeff)*ncoeff;
 	       for (int l = 0; l < ncoeff; l++) {
 		  for (int i = 0; i < ncoeff; i++) {
-		     alphamatt[l*matoffset + i] += dval*coeffmat[i];
+		     alphamatt[l*nunknown + i] += dval*coeffmat[l*ncoeff+i];
 		  }
 	       }
 	    }
