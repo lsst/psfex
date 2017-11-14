@@ -29,8 +29,8 @@
 /*----------------------------- Internal constants --------------------------*/
 
 #define APER_OVERSAMP	5	/* oversampling in each dimension (MAG_APER) */
-#define	INTERPW		6	/* Interpolation function range */
-#define	INTERPFAC	3.0	/* Interpolation envelope factor */
+#define	INTERPW		9	/* Interpolation function range */
+#define	INTERPFAC	5.0	/* Interpolation envelope factor */
 
 #define	INTERPF(x)	(x<1e-5 && x>-1e-5? 1.0 \
 			:(x>INTERPFAC?0.0:(x<-INTERPFAC?0.0 \
