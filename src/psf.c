@@ -1030,8 +1030,8 @@ int     psf_refine(psfstruct *psf, setstruct *set)
     for (i=0; i<npsf; i++)
       {
 /*---- Shift the current basis vector to the current PSF position */
-      vignet_resample(&psf->basis[i*npix], psf->size[0], psf->size[1],
-                vecvig, set->vigsize[0],set->vigsize[1], dx,dy, vigstep, 1.0);
+           vignet_resample_pixel(&psf->basis[i*npix], psf->size[0], psf->size[1],
+                                 vecvig, set->vigsize[0],set->vigsize[1], dx, dy, vigstep, 1.0);
 /*---- Retrieve coefficient for each relevant data pixel */
       for (vecvigt=vecvig, sigvigt=sigvig,
                 desmatt2=desmatt, desindext2=desindext, j=jo=0; j++<nvpix;)
