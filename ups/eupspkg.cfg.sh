@@ -28,5 +28,16 @@ install()
 {
 	clean_old_install
 	scons install prefix=$PREFIX version=$VERSION
+    # Install headers under 'include' directory
+    # in case the user wants to delete 'src'.
+    mkdir -p $PREFIX/include
+    cp config.h $PREFIX/include/
+    cp src/*.h $PREFIX/include/
+    mkdir -p $PREFIX/include/wcs
+    cp src/wcs/*.h $PREFIX/include/wcs
+    mkdir -p $PREFIX/include/levmar/
+    cp src/levmar/*.h $PREFIX/include/levmar
+    mkdir -p $PREFIX/include/fits
+    cp src/fits/*.h $PREFIX/include/fits
 }
 
