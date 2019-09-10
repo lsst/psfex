@@ -33,6 +33,8 @@ define([AC_CACHE_SAVE],)
 # This is your standard AstrOmatic source code...
 AC_INIT(PSFEx, 3.21.1, [astromatic@astromatic.net],
 	psfex, [http://astromatic.net/software/psfex])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR(autoconf)
 AC_CONFIG_SRCDIR(src/makeit.c)
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE([disable])
