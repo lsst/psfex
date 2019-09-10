@@ -340,10 +340,6 @@ AC_MSG_RESULT([***************************************************************])
 AC_CONFIG_FILES([
 Makefile
 psfex.spec
-debian/Makefile
-debian/changelog
-doc/Makefile
-doc/src/conf.py
 man/Makefile
 man/psfex.1
 src/Makefile
