@@ -7,7 +7,7 @@
 #
 #	This file part of:	PSFEx
 #
-#	Copyright:		(C) 2002-2013 Emmanuel Bertin -- IAP/CNRS/UPMC
+#	Copyright:		(C) 2002-2018 IAP/CNRS/SorbonneU
 #
 #	License:		GNU General Public License
 #
@@ -22,7 +22,7 @@
 #	You should have received a copy of the GNU General Public License
 #	along with PSFEx.  If not, see <http://www.gnu.org/licenses/>.
 #
-#	Last modified:		03/06/2013
+#	Last modified:		06/12/2018
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -30,18 +30,20 @@
 define([AC_CACHE_LOAD],)
 define([AC_CACHE_SAVE],)
 
-# This is your standard Bertin source code...
-AC_INIT(psfex, 3.15.2, [bertin@iap.fr])
+# This is your standard AstrOmatic source code...
+AC_INIT(PSFEx, 3.21.1, [astromatic@astromatic.net],
+	psfex, [http://astromatic.net/software/psfex])
 AC_CONFIG_SRCDIR(src/makeit.c)
-AC_CONFIG_AUX_DIR(autoconf)
 AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE([disable])
 AM_INIT_AUTOMAKE
 date=`date +%Y-%m-%d`
+date1=`date -R`
 date2=`date +"%a %b %d %Y"`
 date3=`date +"%B %Y"`
 AC_DEFINE_UNQUOTED(DATE, "$date", [Archive creation date])
-AC_SUBST(PACKAGER, "Emmanuel Bertin")
+AC_SUBST(PACKAGER, "AstrOmatic")
+AC_SUBST(DATE1, "$date1")
 AC_SUBST(DATE2, "$date2")
 AC_SUBST(DATE3, "$date3")
 
@@ -49,6 +51,7 @@ AC_SUBST(DATE3, "$date3")
 sinclude(acx_atlas.m4)
 sinclude(acx_fftw.m4)
 sinclude(acx_mkl.m4)
+sinclude(acx_openblas.m4)
 sinclude(acx_plplot.m4)
 sinclude(acx_prog_cc_optim.m4)
 sinclude(acx_pthread.m4)
@@ -58,30 +61,28 @@ sinclude(acx_urbi_resolve_dir.m4)
 AC_MSG_RESULT([*********** Configuring:  $PACKAGE $VERSION ($date) **********])
 
 # Provide special option for choosing automatically the compilation flags.
-AC_MSG_CHECKING([if compilation flags should be set automatically])
+AC_MSG_CHECKING([if compilation flags are set automatically])
 AC_ARG_ENABLE(auto-flags,
 	[AS_HELP_STRING([--enable-auto-flags],
-	[Let the configure script choose the compilation flags \
-(off by default)])],
+	[Let the configure script choose the compilation flags (default = no)])],
 	AC_MSG_RESULT([yes]),
 	AC_MSG_RESULT([no]))
 
 # Provide special option for the Linux Intel C compiler
-AC_MSG_CHECKING([whether we should use the INTEL compiler])
+AC_MSG_CHECKING([whether the INTEL compiler is enabled])
 AC_ARG_ENABLE(icc,
 	[AS_HELP_STRING([--enable-icc],
-	[Enable special mode for compilation with the Intel compiler \
-(off by default)])],
+	[Use the Intel compiler (default = no)])],
         CC="icc"
 	AC_MSG_RESULT([yes]),
 	AC_MSG_RESULT([no]))
 
 # Provide special options for INTEL MKL
 # We force the use of icc
-AC_MSG_CHECKING([whether we should use INTEL's MKL])
+AC_MSG_CHECKING([whether INTEL's MKL is enabled])
 AC_ARG_ENABLE(mkl,
 	[AS_HELP_STRING([--enable-mkl],
-	[Use INTEL's MKL for solvers and FFTs (off by default)])],
+	[Use INTEL's MKL for solvers and FFTs (default = no)])],
         enable_icc="yes"
         CC="icc"
 	AC_MSG_RESULT([yes]),
@@ -93,7 +94,7 @@ AC_LANG(C)
 AC_SEARCH_LIBS([strerror],[cposix])
 if test "$enable_auto_flags" = "yes"; then
   CFLAGS=""
-  LDFLAGS =""
+  LDFLAGS=""
   ACX_PROG_CC_OPTIM
 fi
 LT_INIT
@@ -137,51 +138,54 @@ AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
 
 # Provide special options for PLPlot
-AC_MSG_CHECKING([whether we should use PLPlot])
+AC_MSG_CHECKING([whether PLPlot is enabled])
 AC_ARG_ENABLE(plplot,
 	[AS_HELP_STRING([--enable-plplot],
-	[Activate PLPlot library (default = yes)])],
+	[Use the PLPlot library (default = yes)])],
 	AC_MSG_RESULT([yes]),
 	AC_MSG_RESULT([no]))
 AC_ARG_WITH(plplot-libdir,
 	[AS_HELP_STRING([--with-plplot-libdir=<PLPlot library path>],
 	[Provide an alternative path to the PLPlot library])])
 AC_ARG_WITH(plplot-incdir,
-	[AS_HELP_STRING([--with-plplot-incdir=<PLPlot include dir>],
-	[Provide an alternative path to the PLPlot include directory])])
+	[AS_HELP_STRING([--with-plplot-incdir=<PLPlot header dir>],
+	[Provide an alternative path to the PLPlot header directory])])
 
 # Provide special options for ATLAS
 AC_ARG_WITH(atlas-libdir,
 	[AS_HELP_STRING([--with-atlas-libdir=<ATLAS library path>],
 	[Provide an alternative path to the ATLAS library])])
 AC_ARG_WITH(atlas-incdir,
-	[AS_HELP_STRING([--with-atlas-incdir=<ATLAS include dir>],
-	[Provide an alternative path to the ATLAS include directory])])
+	[AS_HELP_STRING([--with-atlas-incdir=<ATLAS header dir>],
+	[Provide an alternative path to the ATLAS header directory])])
 
 # Provide special options for FFTW
 AC_ARG_WITH(fftw-libdir,
 	[AS_HELP_STRING([--with-fftw-libdir=<FFTW library path>],
 	[Provide an alternative path to the FFTW library])])
 AC_ARG_WITH(fftw-incdir,
-	[AS_HELP_STRING([--with-fftw-incdir=<FFTW include dir>],
-	[Provide an alternative path to the FFTW include directory])])
+	[AS_HELP_STRING([--with-fftw-incdir=<FFTW header dir>],
+	[Provide an alternative path to the FFTW header directory])])
 
 # Provide special options for the MKL library
 AC_ARG_WITH(mkl-dir,
 	[AS_HELP_STRING([--with-mkl-dir=<MKL path>],
 	[Provide an alternative path to the MKL library])])
 
-AC_ARG_WITH(clapack,
-	[AS_HELP_STRING([--with-clapack],
-	[Provide path to CLAPACK])])
+# Provide special options for OpenBLAS
+AC_MSG_CHECKING([whether OpenBLAS is enabled])
+AC_ARG_ENABLE(openblas,
+	[AS_HELP_STRING([--enable-openblas],
+	[Use the OpenBLAS library instead of ATLAS (default = no)])],
+	AC_MSG_RESULT([yes]),
+	AC_MSG_RESULT([no]))
+AC_ARG_WITH(openblas-libdir,
+	[AS_HELP_STRING([--with-openblas-libdir=<OpenBLAS library path>],
+	[Provide an alternative path to the OpenBLAS library])])
+AC_ARG_WITH(openblas-incdir,
+	[AS_HELP_STRING([--with-openblas-incdir=<OpenBLAS header dir>],
+	[Provide an alternative path to the OpenBLAS header directory])])
 
-AC_ARG_WITH(lapack-stub,
-	[AS_HELP_STRING([--with-lapack-stub],
-	[Use built-in stub LAPACK])])
-
-AC_ARG_WITH(lapacke,
-	[AS_HELP_STRING([--with-lapacke],
-	[Provide path to LAPACKE])])
 
 # Provide a special option for the default XSLT URL
 with_xsl_url="file://"$(URBI_RESOLVE_DIR([$datadir]))"/$PACKAGE_NAME/$PACKAGE_NAME.xsl"
@@ -238,7 +242,7 @@ if test "$use_pthreads" = "yes"; then
 fi
 AM_CONDITIONAL(USE_THREADS, test $use_pthreads = "yes")
 
-############ handle the INTEL MKL library (LAPACK) ###########
+############ handle the INTEL MKL library (FFTW + LAPACKe) ###########
 if test "$enable_mkl" = "yes"; then
   convlibs="${srcdir}/wcs/libwcs_c.a,${srcdir}/levmar/liblevmar.a"
   ACX_MKL($with_mkl_dir,,$enable_best_link,$convlibs)
@@ -248,54 +252,44 @@ if test "$enable_mkl" = "yes"; then
   AM_CFLAGS="$AM_CFLAGS $MKL_CFLAGS "
   AM_LDFLAGS="$AM_LDFLAGS $MKL_LDFLAGS "
   LIBS="$LIBS $MKL_LIBS"
+
 else
 ################ handle the FFTW library (Fourier transforms) ################
-  ACX_FFTW($with_fftw_libdir,$with_fftw_incdir,$use_pthreads,yes,
-	[LIBS="$FFTW_LIBS $LIBS"]
-	if test "$FFTW_WARN" != ""; then
-	  AC_MSG_WARN([$FFTW_WARN])
-	fi,
-	AC_MSG_ERROR([$FFTW_ERROR Exiting.]))
+  ACX_FFTW($with_fftw_libdir, $with_fftw_incdir, $use_pthreads,yes,
+    [
+      [LIBS="$FFTW_LIBS $LIBS"]
+      if test "$FFTW_WARN" != ""; then
+        AC_MSG_WARN([$FFTW_WARN])
+      fi
+    ],
+    AC_MSG_ERROR([$FFTW_ERROR Exiting.])
+  )
 
-################ handle the clapack library (linear algebra) #################
-  if test "x$with_clapack" != "x"; then
-    LIBS="$LIBS -L${with_clapack}/lib"
-    CFLAGS="$CFLAGS -I${with_clapack}/include"
-    CPPFLAGS="$CPPFLAGS -I${with_clapack}/include"
-    AC_CHECK_HEADERS([clapack.h], [], AC_MSG_ERROR(["Can't find clapack header"]),
-    [#include <f2c.h>
-    ])
-    AC_CHECK_LIB([lapack], [dposv_],
-                 [LIBS="$LIBS -llapack -lf2c -lm"],
-                 AC_MSG_ERROR(["Can't find clapack library"]),
-                 [-llapack -lf2c -lm])
-    AC_DEFINE(HAVE_CLAPACK,1, [Define if you have the CLAPACK libraries.])
-    AC_DEFINE_UNQUOTED(CLAPACK_H, "clapack.h", [CLAPACK header filename.])
-################ handle the LAPACKe library (linear algebra) #################
-  elif test "x$with_lapacke" != "x"; then
-    LIBS="$LIBS -L${with_lapacke}/lib"
-    CFLAGS="$CFLAGS -I${with_lapacke}/include"
-    CPPFLAGS="$CPPFLAGS -I${with_lapacke}/include"
-    AC_CHECK_HEADERS([lapacke.h], [], AC_MSG_ERROR(["Can't find lapacke header"]))
-    AC_CHECK_LIB([lapacke], [LAPACKE_dposv],
-                 [LIBS="$LIBS -llapacke -llapack -lblas -lm -lgfortran"],
-                 AC_MSG_ERROR(["Can't find lapacke library"]),
-                 [-llapack -lblas -lm -lgfortran])
-    AC_DEFINE(HAVE_LAPACKE,1, [Define if you have the LAPACKe libraries.])
-    AC_DEFINE_UNQUOTED(LAPACKE_H, "lapacke.h", [LAPACKe header filename.])
-################ handle the built-in lapack stub (linear algebra) #################
-  elif test "x$with_lapack_stub" != "x"; then
-    AC_DEFINE(HAVE_LAPACK_STUB,1, [Define if you have the LAPACK stub.])
-    AC_DEFINE_UNQUOTED(LAPACK_STUB_H, "lapack_stub.h", [LAPACK stub header filename.])
-    AC_DEFINE_UNQUOTED(F2C_H, "f2c.h", [f2c header filename.])
+  if test "x$enable_openblas" = "xyes"; then
+######## Handle the OpenBLAS library (linear algebra: BLAS + cLAPACK) ########
+    ACX_OPENBLAS($with_openblas_libdir, $with_openblas_incdir, $use_pthreads, no,
+      [
+        AM_CFLAGS="$AM_CFLAGS $OPENBLAS_CFLAGS "
+        AM_LDFLAGS="$AM_LDFLAGS $OPENBLAS_LDFLAGS "
+        LIBS="$OPENBLAS_LIBS $LIBS"
+        if test "$OPENBLAS_WARN" != ""; then
+          AC_MSG_WARN([$OPENBLAS_WARN])
+        fi
+      ],
+      AC_MSG_ERROR([$OPENBLAS_ERROR Exiting.])
+    )
+
   else
-################# handle the ATLAS library (linear algebra) ##################
-  ACX_ATLAS($with_atlas_libdir,$with_atlas_incdir,$use_pthreads,
-	[LIBS="$ATLAS_LIBS $LIBS"]
-	if test "$ATLAS_WARN" != ""; then
+######### handle the ATLAS library (linear algebra: BLAS + cLAPACK) ##########
+    ACX_ATLAS($with_atlas_libdir, $with_atlas_incdir, $use_pthreads,
+      [
+        [LIBS="$ATLAS_LIBS $LIBS"]
+        if test "$ATLAS_WARN" != ""; then
 	  AC_MSG_WARN([$ATLAS_WARN])
-	fi,
-	AC_MSG_ERROR([$ATLAS_ERROR Exiting.]))
+	fi
+      ],
+      AC_MSG_ERROR([$ATLAS_ERROR Exiting.])
+    )
   fi
 fi
 
@@ -325,7 +319,7 @@ fi
 # "Best" linking option
 if test "$enable_best_link" = "yes"; then
   if test "$enable_icc" = "yes"; then
-    AM_LDFLAGS="-static-intel -openmp-link static -shared-libgcc \
+    AM_LDFLAGS="-static-intel -qopenmp-link static -shared-libgcc \
 	-static-libtool-libs -no-intel-extensions -avoid-version $AM_LDFLAGS"
   else
     AM_LDFLAGS="-shared-libgcc -static-libtool-libs -avoid-version $AM_LDFLAGS"
@@ -345,11 +339,16 @@ AC_MSG_RESULT([***************************************************************])
 
 AC_CONFIG_FILES([
 Makefile
+psfex.spec
+debian/Makefile
+debian/changelog
+doc/Makefile
+doc/src/conf.py
 man/Makefile
+man/psfex.1
 src/Makefile
 src/fits/Makefile
 src/levmar/Makefile
 src/wcs/Makefile
-psfex.spec
-man/psfex.1])
+])
 AC_OUTPUT
