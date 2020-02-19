@@ -19,15 +19,9 @@ config()
 	./configure ${options}
 }
 
-build()
-{
-	scons prefix=$PREFIX version=$VERSION
-}
-
 install()
 {
-	clean_old_install
-	scons install prefix=$PREFIX version=$VERSION
+    default_install
     # Install headers under 'include' directory
     # in case the user wants to delete 'src'.
     mkdir -p $PREFIX/include
