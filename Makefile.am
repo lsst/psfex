@@ -26,17 +26,16 @@
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+ACLOCAL_AMFLAGS		= -I m4
 AUTOMAKE_OPTIONS	= foreign no-dependencies
-SUBDIRS			= man src
+SUBDIRS			= src man
 dist_pkgdata_DATA	= config/* xsl/psfex.xsl
-EXTRA_DIST		= doc AUTHORS BUGS ChangeLog \
-			  COPYRIGHT HISTORY INSTALL LICENSE README THANKS \
-			  acx_atlas.m4 acx_fftw.m4 acx_prog_cc_optim.m4 \
-			  acx_plplot.m4 acx_urbi_resolve_dir.m4
+EXTRA_DIST		= autogen.sh AUTHORS BUGS ChangeLog \
+			  COPYRIGHT HISTORY INSTALL LICENSE README THANKS
 RPM_ROOTDIR		= `rpmbuild --nobuild -E %_topdir`
 RPM_SRCDIR		= $(RPM_ROOTDIR)/SOURCES
 dist-hook:
-	rm -rf `find $(distdir) -name .svn`
+	rm -rf `find $(distdir) -type d \( -name .svn -o -name .git \)`
 
 rpm:	dist
 	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz $(RPM_SRCDIR)

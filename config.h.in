@@ -6,14 +6,11 @@
 /* CLAPACK header filename. */
 #undef ATLAS_LAPACK_H
 
-/* CLAPACK header filename. */
-#undef CLAPACK_H
+/* BLAS header filename. */
+#undef BLAS_H
 
 /* Archive creation date */
 #undef DATE
-
-/* f2c header filename. */
-#undef F2C_H
 
 /* FFTW header filename. */
 #undef FFTW_H
@@ -24,20 +21,11 @@
 /* Define if you have the ATLAS libraries and header files. */
 #undef HAVE_ATLAS
 
-/* Define to 1 if you have the <atlas/cblas.h> header file. */
-#undef HAVE_ATLAS_CBLAS_H
-
-/* Define to 1 if you have the <atlas/clapack.h> header file. */
-#undef HAVE_ATLAS_CLAPACK_H
-
-/* Define if you have the parallel ATLAS libraries. */
-#undef HAVE_ATLAS_MP
+/* Define if you have the BLAS library and header files. */
+#undef HAVE_BLAS
 
 /* Define to 1 if you have the <cblas.h> header file. */
 #undef HAVE_CBLAS_H
-
-/* Define if you have the CLAPACK libraries. */
-#undef HAVE_CLAPACK
 
 /* Define to 1 if you have the <clapack.h> header file. */
 #undef HAVE_CLAPACK_H
@@ -83,20 +71,8 @@
 /* Define if you have the LAPACK libraries. */
 #undef HAVE_LAPACK
 
-/* Define if you have the LAPACKe libraries. */
+/* Define if you have the LAPACKe library and header files. */
 #undef HAVE_LAPACKE
-
-/* Define to 1 if you have the <lapacke.h> header file. */
-#undef HAVE_LAPACKE_H
-
-/* Define if you have the LAPACK stub. */
-#undef HAVE_LAPACK_STUB
-
-/* Define to 1 if you have the `cblas' library (-lcblas). */
-#undef HAVE_LIBCBLAS
-
-/* Define to 1 if you have the `lapack' library (-llapack). */
-#undef HAVE_LIBLAPACK
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
@@ -107,7 +83,7 @@
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
-/* Define to 1 if the system has the type 'long long int'. */
+/* Define to 1 if the system has the type `long long int'. */
 #undef HAVE_LONG_LONG_INT
 
 /* Define to 1 if you have the <malloc.h> header file. */
@@ -139,6 +115,12 @@
 
 /* Define to 1 if you have the `munmap' function. */
 #undef HAVE_MUNMAP
+
+/* Define if you have the OpenBLAS library and header files. */
+#undef HAVE_OPENBLAS
+
+/* Define if you have the OpenBLAS parallel library and header files. */
+#undef HAVE_OPENBLASP
 
 /* Define if you have the PLPlot libraries and header files. */
 #undef HAVE_PLPLOT
@@ -177,9 +159,6 @@
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
-/* Define to 1 if you have the <sys/param.h> header file. */
-#undef HAVE_SYS_PARAM_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -189,7 +168,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type 'unsigned long long int'. */
+/* Define to 1 if the system has the type `unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
 /* LAPACKe header filename. */
@@ -197,9 +176,6 @@
 
 /* LAPACK header filename. */
 #undef LAPACK_H
-
-/* LAPACK stub header filename. */
-#undef LAPACK_STUB_H
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -225,9 +201,6 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
@@ -262,11 +235,6 @@
 
 /* Default URL of the XSLT filter */
 #undef XSL_URL
-
-/* Enable large inode numbers on Mac OS X 10.5.  */
-#ifndef _DARWIN_USE_64_BIT_INODE
-# define _DARWIN_USE_64_BIT_INODE 1
-#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
