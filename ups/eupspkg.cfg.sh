@@ -12,9 +12,9 @@ config()
 	# the package provided through eups. It checks if the eups fftw
 	# environment variable is set, and if it is the configuration is
 	# set appropriately.
-	if [ "$FFTW_DIR" ]; then
-		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
-		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
+	if [ "$CONDA_PREFIX" ]; then
+		options=$options"--with-fftw-incdir=$CONDA_PREFIX/include "
+		options=$options"--with-fftw-libdir=$CONDA_PREFIX/lib "
 	fi
 	./configure ${options}
 }
