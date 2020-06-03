@@ -15,13 +15,7 @@ config()
 	if [ "$FFTW_DIR" ]; then
 		options=$options"--with-fftw-incdir=$FFTW_DIR/include "
 		options=$options"--with-fftw-libdir=$FFTW_DIR/lib "
-	elif [ "$CONDA_PREFIX" ]; then
-                options=$options"--enable-openblas "
-		options=$options"--with-fftw-incdir=${CONDA_PREFIX}/include "
-		options=$options"--with-fftw-libdir=${CONDA_PREFIX}/lib "
-		options=$options"--with-openblas-incdir=${CONDA_PREFIX}/include "
-		options=$options"--with-openblas-libdir=${CONDA_PREFIX}/lib "
-        fi
+	fi
 	./configure ${options}
 }
 
