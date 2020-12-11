@@ -65,6 +65,7 @@ double		*pthread_dpos,
 int		pthread_overflag, pthread_n, pthread_nt, pthread_npc;
 #endif
 
+float	moffat_parammin[PSF_DIAGNPARAM],moffat_parammax[PSF_DIAGNPARAM];
 double lm_opts[] = {1.0e-2, 1.0e-12, 1.0e-12, 1.0e-12, 1.0e-4};
 
 /****** psf_wcsdiagnostic *****************************************************

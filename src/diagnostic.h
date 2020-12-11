@@ -49,7 +49,7 @@
 
 /*----------------------------- Global variables ---------------------------*/
 
-float		moffat_parammin[PSF_DIAGNPARAM],moffat_parammax[PSF_DIAGNPARAM];
+extern float	moffat_parammin[PSF_DIAGNPARAM],moffat_parammax[PSF_DIAGNPARAM];
 
 /*---------------------------------- protos --------------------------------*/
 extern void	psf_boundtounbound(float *param, double *dparam),
