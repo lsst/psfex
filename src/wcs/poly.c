@@ -57,7 +57,7 @@
 #include LAPACK_STUB_H
 #endif
 
-typedef long_double double;
+typedef double long_double;
 
 #define QCALLOC(ptr, typ, nel) \
                 {if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
