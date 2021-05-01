@@ -57,6 +57,8 @@
 #include LAPACK_STUB_H
 #endif
 
+typedef long_double double;
+
 #define QCALLOC(ptr, typ, nel) \
                 {if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
                   qerror("Not enough memory for ", \
@@ -244,7 +246,7 @@ double  poly_func(polystruct *poly, double *pos)
   {
    double       xpol[POLY_MAXDIM+1];
    double       *post, *xpolt, *basis, *coeff, xval;
-   long double  val;
+   long_double  val;
    int          expo[POLY_MAXDIM+1], gexpo[POLY_MAXDIM+1];
    int          *expot, *degree,*degreet, *group,*groupt, *gexpot,
                         d,g,t, ndim;
@@ -435,7 +437,7 @@ VERSION 05/10/2010
  ***/
 void    poly_addcste(polystruct *poly, double *cste)
   {
-   long double  *acoeff;
+   long_double  *acoeff;
    double       *coeff,*mcoeff,*mcoefft,
                 val;
    int          *mpowers,*powers,*powerst,*powerst2,
@@ -448,7 +450,7 @@ void    poly_addcste(polystruct *poly, double *cste)
     if (maxdegree < poly->degree[j])
       maxdegree = poly->degree[j];
   maxdegree++;          /* Actually we need maxdegree+1 terms */
-  QCALLOC(acoeff, long double, ncoeff);
+  QCALLOC(acoeff, long_double, ncoeff);
   QCALLOC(mcoeff, double, ndim*maxdegree);
   QCALLOC(mpowers, int, ndim);
   mcoefft = mcoeff;             /* To avoid gcc -Wall warnings */
