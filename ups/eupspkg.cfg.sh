@@ -6,7 +6,7 @@ config()
   	}
  	trap finish EXIT
 	options="--prefix=$PREFIX --disable-threads --with-lapack-stub "
-	options=$options"--enable-plplot=no "
+	options=$options"--enable-plplot=no --with-fftw-incdir=$CONDA_PREFIX/include"
 	./configure ${options}
 }
 
