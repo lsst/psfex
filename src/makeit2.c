@@ -495,6 +495,8 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
    basistypenum		basistype;
    float		pixsize[2];
 
+   fprintf(stderr, "in make_psf\n");
+
   pixsize[0] = (float)prefs.psf_pixsize[0];
   pixsize[1] = (float)prefs.psf_pixsize[1];
 //  NFPRINTF(OUTPUT,"Initializing PSF modules...");
@@ -567,6 +569,6 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
 /*-- Just check the Chi2 */
   psf->chi2 = set->nsample? psf_chi2(psf, set) : 0.0;
 
-  
+  fprintf(stderr, "chi2 = %lf\n", psf->chi2);
   return psf;
   }
