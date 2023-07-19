@@ -83,7 +83,7 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
 	{
 		return;
 	}
-
+        /*
         int i, j;
 
         fprintf(stderr, "%ld, %ld\n", *LDA, *N);
@@ -93,7 +93,7 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
             }
             fprintf(stderr, "\n");
         }
-
+        */
 	*info = 0;
 	return;
 }
