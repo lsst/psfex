@@ -230,6 +230,7 @@ makeit_body(
 /* Compute "final" PSF models */
   if (prefs.psf_mef_type == PSF_MEF_COMMON)
     {
+        fprintf(stderr, "PSF_MEF_COMMON\n");
     if (prefs.stability_type == STABILITY_SEQUENCE)
       {
           fprintf(stderr, "STABILITY_SEQUENCE\n");
@@ -295,7 +296,7 @@ makeit_body(
             sprintf(str, "Computing hidden dependency parameter(s) from %s...",
 		fields[c]->rtcatname);
           NFPRINTF(OUTPUT, str);
-          fprintf(stderr, "about to load samples\n");
+          fprintf(stderr, "about to load samples????\n");
           set = load_samples(incatnames, c, 1, ext, next, context);
           field_count(fields, set, COUNT_LOADED);
           cpsf[c] = make_psf(set, step, basis, nbasis, context);
@@ -312,6 +313,7 @@ makeit_body(
 
       if (prefs.stability_type == STABILITY_SEQUENCE)
         {
+            fprintf(stderr, " STABILITY_SEQUENCE\n");
 /*------ Load all the samples at once */
         if (next>1)
           {
@@ -321,6 +323,7 @@ makeit_body(
           }
         else
           NFPRINTF(OUTPUT, "Computing final PSF model...");
+        fprintf(stderr, "LOAD SAMPLES\n");
         set = load_samples(incatnames, 0, ncat, ext, next, fullcontext);
         if (psfstep)
           step = psfstep;
@@ -329,6 +332,7 @@ makeit_body(
         else
           step = (float)((set->fwhm/2.35)*0.5);
         field_count(fields, set, COUNT_LOADED);
+        fprintf(stderr, "about to make_psf\n");
         psf = make_psf(set, step, basis, nbasis, fullcontext);
         field_count(fields, set, COUNT_ACCEPTED);
         if (free_sets) end_set(set);
@@ -336,6 +340,7 @@ makeit_body(
         psf_end(psf);
         }
       else
+          fprintf(stderr, "THIS IS HERE\n");
         for (c=0; c<ncat; c++)
           {
 /*-------- Load the samples for current exposure */
@@ -361,6 +366,7 @@ makeit_body(
 		fields[c]->rtcatname);
           NFPRINTF(OUTPUT, str);
           field_count(fields, set, COUNT_LOADED);
+          fprintf(stderr, "THIS IS THE MAKE\n");
           psf = make_psf(set, step, basis, nbasis, context);
           field_count(fields, set, COUNT_ACCEPTED);
           if (free_sets) end_set(set);
