@@ -30,12 +30,6 @@
 #include        "config.h"
 #endif
 
-#ifdef USE_THREADS
- #ifdef HAVE_MKL
-  #include MKL_H
- #endif
-#endif
-
 #include	<math.h>
 #include	<stdio.h>
 #include	<stdlib.h>
