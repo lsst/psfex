@@ -748,6 +748,11 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
     for (i=0; i<ndim; i++)
       pos[i] = (sample->context[i]-set->contextoffset[i])
                 /set->contextscale[i];
+    fprintf(stderr, "building with ... ");
+    for (i=0; i<ndim; i++) {
+        fprintf(stderr, "%lf ", pos[i]);
+    }
+    fprintf(stderr, "\n");
     psf_build(psf, pos);
 
 /*-- Delta-x and Delta-y in vignet-pixel units */
