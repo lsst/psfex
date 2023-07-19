@@ -180,6 +180,7 @@ double  psf_chi2(psfstruct *psf, setstruct *set)
 
 /* First compute residuals for each sample (chi^2) */
 //  NFPRINTF(OUTPUT,"Computing residuals...");
+   fprintf(stderr, "running makeresi (%d)...\n", prefs.recenter_flag);
   psf_makeresi(psf, set, prefs.recenter_flag, prefs.prof_accuracy);
 
 /* Store the chi's (sqrt(chi2) pdf close to gaussian) */

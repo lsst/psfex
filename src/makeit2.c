@@ -505,6 +505,8 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
   psf->samples_loaded = set->nsample;
   psf->fwhm = set->fwhm;
 
+  fprintf(stderr, "nsamp, fwhm = %ld, %lf\n", psf->samples_loaded, psf->fwhm);
+
 /* Make the basic PSF-model (1st pass) */
 //  NFPRINTF(OUTPUT,"Modeling the PSF (1/3)...");
   psf_make(psf, set, 0.2);
@@ -565,7 +567,6 @@ psfstruct	*make_psf(setstruct *set, float psfstep,
   psf_clean(psf, set, prefs.prof_accuracy);
   psf_refine(psf, set);
 
-  
 /*-- Just check the Chi2 */
   psf->chi2 = set->nsample? psf_chi2(psf, set) : 0.0;
 
