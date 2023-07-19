@@ -84,6 +84,8 @@ makeit_body(
 			psfstep, step;
    int			c,i,p, ncat, ext, next, nmed, nbasis;
 
+   fprintf(stderr, "MAKE IT BODY\n");
+
   incatnames = prefs.incat_name;
   ncat = prefs.ncat;
   next = fields[0]->next;
@@ -146,6 +148,7 @@ makeit_body(
 /* Derive a new common PCA basis for all extensions */
   if (prefs.newbasis_type==NEWBASIS_PCACOMMON)
     {
+        fprintf(stderr, "NEWBASIS_PCACOMMON\n");
     QMALLOC(cpsf, psfstruct *, ncat*next);
     for (ext=0 ; ext<next; ext++)
       for (c=0; c<ncat; c++)
@@ -167,6 +170,7 @@ makeit_body(
 /* Derive a new PCA basis for each extension */
   else if (prefs.newbasis_type == NEWBASIS_PCAINDEPENDENT)
     {
+        fprintf(stderr, "NEWBASIS_PCAINDEPENDENT\n");
     nbasis = prefs.newbasis_number;
     QMALLOC(psfbasiss, float *, next);
     for (ext=0; ext<next; ext++)
@@ -195,6 +199,8 @@ makeit_body(
   if (context->npc && prefs.hidden_mef_type == HIDDEN_MEF_COMMON)
 /*-- Derive principal components of PSF variation from the whole mosaic */
     {
+        fprintf(stderr, "HIDDEN_MEF\n");
+
     p = 0;
     QMALLOC(cpsf, psfstruct *, ncat*next);
     for (c=0; c<ncat; c++)
@@ -226,6 +232,8 @@ makeit_body(
     {
     if (prefs.stability_type == STABILITY_SEQUENCE)
       {
+          fprintf(stderr, "STABILITY_SEQUENCE\n");
+
 /*---- Load all the samples at once */
       set = load_samples(incatnames, 0, ncat, ALL_EXTENSIONS, next, context);
       step = psfstep;
@@ -239,6 +247,8 @@ makeit_body(
       psf_end(psf);
       }
     else
+        fprintf(stderr, "NOT STABILITY_SEQUENCE\n");
+
       for (c=0; c<ncat; c++)
         {
 /*------ Load the samples for current exposure */
@@ -260,6 +270,8 @@ makeit_body(
         }
     }
   else
+      fprintf(stderr, "NOT COMMON?\n");
+
     for (ext=0 ; ext<next; ext++)
       {
       basis = psfbasiss? psfbasiss[ext] : psfbasis;
@@ -396,8 +408,10 @@ makeit_body(
       if (set2->nsample>1)
         {
 /*------ Remove bad PSF candidates */
+            fprintf(stderr, "CLEAN AND CHI2\n");
         psf_clean(psf, set2, prefs.prof_accuracy);
         psf->chi2 = set2->nsample? psf_chi2(psf, set2) : 0.0;
+        fprintf(stderr, "chi2 = %lf\n", psf->chi2);
         }
       psf->samples_accepted = set2->nsample;
 
@@ -444,6 +458,8 @@ makeit_body(
    mkl_set_num_threads(prefs.nthreads);
  #endif
 #endif
+
+   fprintf(stderr, "DONE WITH MAKE IT BODY\n");
 
   return;
   }

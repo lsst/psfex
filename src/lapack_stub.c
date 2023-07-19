@@ -84,6 +84,16 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
 		return;
 	}
 
+        int i, j;
+
+        fprintf(stderr, "%ld, %ld\n", *LDA, *N);
+        for (i = 0; i < *LDA; i++) {
+            for (j = 0; j < *N; j++) {
+                fprintf(stderr, "%lf ", A[i * *LDA + j]);
+            }
+            fprintf(stderr, "\n");
+        }
+
 	*info = 0;
 	return;
 }

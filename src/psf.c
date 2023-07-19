@@ -636,6 +636,8 @@ void    psf_build(psfstruct *psf, double *pos)
    float        *ppc, *pl, fac;
    int          n,p, npix;
 
+   // fprintf(stderr, "IN PSF BUILD\n");
+
   npix = psf->size[0]*psf->size[1];
 /* Reset the Local PSF mask */
   memset(psf->loc, 0, npix*sizeof(float));
@@ -800,9 +802,11 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
  #endif
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
         integer one = 1, three = 3, info = 0;
+        fprintf(stderr, "SDFLKJLKJELKJKJF\n");
         dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
         if (info != 0)
 #else
+            fprintf(stderr, "WAT\n");
         if (clapack_dposv(CblasRowMajor,CblasUpper,3,1,amat,3,bmat,3) != 0)
 #endif
           warning("Not a positive definite matrix", " in PSF model solver");

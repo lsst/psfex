@@ -249,6 +249,7 @@ double  poly_func(polystruct *poly, double *pos)
    int          *expot, *degree,*degreet, *group,*groupt, *gexpot,
                         d,g,t, ndim;
 
+   // fprintf(stderr, "IN POLY FUNC\n");
 /* Prepare the vectors and counters */
   ndim = poly->ndim;
   basis = poly->basis;
@@ -735,12 +736,16 @@ void    poly_initortho(polystruct *poly, double *data, int ndata)
 
 /* Compute the "unorthonormalization" matrix */
   QMEMCPY(poly->deorthomat, poly->orthomat, double, ncoeff*ncoeff);
+  fprintf(stderr, "GOING TO DTRTRI\n");
 #if defined(HAVE_LAPACKE)
+  fprintf(stderr, "HAVE_LAPACKE\n");
   LAPACKE_dtrtri(LAPACK_ROW_MAJOR, 'L', 'N', ncoeff,poly->orthomat,ncoeff);
 #elif defined(HAVE_ATLAS)
+  fprintf(stderr, "HAVE_ATLAS\n");
   clapack_dtrtri(CblasRowMajor, CblasLower, CblasNonUnit, ncoeff,
         poly->orthomat, ncoeff);
 #elif defined(HAVE_CLAPACK) || defined(HAVE_CLAPACK_STUB)
+  fprintf(stderr, "SHOULD BE\n");
   integer info = 0, num = ncoeff;
   dtrtri_("L", "N", &num, poly->orthomat, &num, &info);
 #else
