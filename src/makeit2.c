@@ -275,9 +275,11 @@ makeit_body(
     for (ext=0 ; ext<next; ext++)
       {
       basis = psfbasiss? psfbasiss[ext] : psfbasis;
+      fprintf(stderr, "basis = %d\n", (int) basis);
       if (context->npc && prefs.hidden_mef_type == HIDDEN_MEF_INDEPENDENT)
 /*------ Derive principal components of PSF components */
         {
+            fprintf(stderr, "HERE I AM %d\n", ncat);
         QMALLOC(cpsf, psfstruct *, ncat);
         if (psfsteps)
           step = psfsteps[ext];
@@ -293,6 +295,7 @@ makeit_body(
             sprintf(str, "Computing hidden dependency parameter(s) from %s...",
 		fields[c]->rtcatname);
           NFPRINTF(OUTPUT, str);
+          fprintf(stderr, "about to load samples\n");
           set = load_samples(incatnames, c, 1, ext, next, context);
           field_count(fields, set, COUNT_LOADED);
           cpsf[c] = make_psf(set, step, basis, nbasis, context);
@@ -305,6 +308,7 @@ makeit_body(
           psf_end(cpsf[c]);
         free(cpsf);
         }
+      fprintf(stderr, "ANOTHER\n");
 
       if (prefs.stability_type == STABILITY_SEQUENCE)
         {
