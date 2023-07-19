@@ -61,10 +61,10 @@
 #include CLAPACK_H
 #endif
 
-#ifdef HAVE_LAPACK_STUB
-#include F2C_H
-#include LAPACK_STUB_H
-#endif
+#include "f2c.h"
+#include "lapack_stub.h"
+
+#include "gsl/gsl_cblas.h"
 
 static double   psf_laguerre(double x, int p, int q);
 
@@ -792,19 +792,9 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
           }
 
 /*------ Solve the system */
-#if defined(HAVE_LAPACKE)
- #ifdef MATSTORAGE_PACKED
-        if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',3,1,amat,bmat,3) != 0)
- #else
-        if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',3,1,amat,3,bmat,3) != 0)
- #endif
-#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
         integer one = 1, three = 3, info = 0;
         dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
         if (info != 0)
-#else
-        if (clapack_dposv(CblasRowMajor,CblasUpper,3,1,amat,3,bmat,3) != 0)
-#endif
           warning("Not a positive definite matrix", " in PSF model solver");
 
 /*------ Convert to a shift */
@@ -1123,22 +1113,9 @@ int     psf_refine(psfstruct *psf, setstruct *set)
 
 //  NFPRINTF(OUTPUT,"Solving the system...");
 
-#if defined(HAVE_LAPACKE)
- #ifdef MATSTORAGE_PACKED
-  if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,betamat,nunknown)
-        != 0)
- #else
-  if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nunknown,1,alphamat,nunknown,
-        betamat,nunknown) != 0)
- #endif
-#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nunknown;
   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
-#else
-  if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,
-        betamat,nunknown) != 0)
-#endif
     warning("Not a positive definite matrix"," in PSF model refinement solver");
 
 /* Check whether the result is coherent or not */

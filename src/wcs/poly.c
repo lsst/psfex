@@ -52,10 +52,8 @@
 #include CLAPACK_H
 #endif
 
-#ifdef HAVE_LAPACK_STUB
-#include F2C_H
-#include LAPACK_STUB_H
-#endif
+#include "f2c.h"
+#include "lapack_stub.h"
 
 #define QCALLOC(ptr, typ, nel) \
                 {if (!(ptr = (typ *)calloc((size_t)(nel),sizeof(typ)))) \
@@ -518,17 +516,9 @@ VERSION 20/11/2012
  ***/
 int     poly_solve(double *a, double *b, int n)
   {
-#if defined(HAVE_LAPACKE)
-  return LAPACKE_dposv(LAPACK_COL_MAJOR, 'L', n, 1, a, n, b, n);
-#elif defined(HAVE_ATLAS)
-  return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
-#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = n;
   dposv_("L", &num, &one, a, &num, b, &num, &info);
   return info;
-#else
-  return cholsolve(a,b,n);
-#endif
   }
 
 

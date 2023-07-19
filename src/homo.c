@@ -61,10 +61,10 @@
 #include CLAPACK_H
 #endif
 
-#ifdef HAVE_LAPACK_STUB
-#include F2C_H
-#include LAPACK_STUB_H
-#endif
+#include "f2c.h"
+#include "lapack_stub.h"
+
+#include "gsl/gsl_cblas.h"
 
 /****** psf_homo *******************************************************
 PROTO   void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
@@ -227,19 +227,9 @@ void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
   free(cross);
   free(tcross);
 
-#if defined(HAVE_LAPACKE)
- #ifdef MATSTORAGE_PACKED
-  if (LAPACKE_dppsv(LAPACK_COL_MAJOR,'L',nfree,1,amat,bmat,nfree) != 0)
- #else
-  if (LAPACKE_dposv(LAPACK_COL_MAJOR,'L',nfree,1,amat,nfree,bmat,nfree) != 0)
- #endif
-#elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nfree;
   dposv_("L", &num, &one, amat, &num, bmat, &num, &info);
   if (info != 0)
-#else
-  if (clapack_dposv(CblasRowMajor,CblasUpper,nfree,1,amat,nfree,bmat,nfree)!=0)
-#endif
     warning("Not a positive definite matrix", " in homogenization solver");
 
   QCALLOC(kernel, float, npix*ncoeff);

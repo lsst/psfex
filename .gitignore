@@ -27,3 +27,6 @@ man/psfex.1
 python/astromatic/psfex/version.py*
 lib/libpsfex.so
 ups/psfex.cfgc
+
+# Convention for out-of-source CMake builds
+build
