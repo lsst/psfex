@@ -14,7 +14,7 @@ endif()
 include(GNUInstallDirs)
 
 include(FindPkgConfig)
-pkg_search_module(FFTW3 REQUIRED fftw3)
+pkg_search_module(FFTW3 REQUIRED fftw3f)
 
 find_package(GSL REQUIRED)
 
@@ -59,8 +59,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-    GSL::gslcblas
-    ${FFTW3_LIBRARIES})
+        GSL::gslcblas
+        fftw3 fftw3f)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
