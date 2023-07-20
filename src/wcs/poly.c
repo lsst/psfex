@@ -525,6 +525,7 @@ int     poly_solve(double *a, double *b, int n)
   return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = n;
+  fprintf(stderr, "wcs dposv!\n");
   dposv_("L", &num, &one, a, &num, b, &num, &info);
   return info;
 #else

@@ -748,11 +748,13 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
     for (i=0; i<ndim; i++)
       pos[i] = (sample->context[i]-set->contextoffset[i])
                 /set->contextscale[i];
+    /*
     fprintf(stderr, "building with ... ");
     for (i=0; i<ndim; i++) {
         fprintf(stderr, "%lf ", pos[i]);
     }
     fprintf(stderr, "\n");
+    */
     psf_build(psf, pos);
 
 /*-- Delta-x and Delta-y in vignet-pixel units */
@@ -836,7 +838,7 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
         }
       }
 
-
+    fprintf(stderr, "about to resample...\n");
 /*-- Map the PSF model at the current position */
     vignet_resample(psf->loc, psf->size[0], psf->size[1],
         sample->vigresi, set->vigsize[0], set->vigsize[1],
@@ -1143,6 +1145,7 @@ int     psf_refine(psfstruct *psf, setstruct *set)
  #endif
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nunknown;
+  fprintf(stderr, "Another dposv chance!\n");
   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
 #else
