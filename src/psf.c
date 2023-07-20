@@ -793,7 +793,7 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
 
 /*------ Solve the system */
         integer one = 1, three = 3, info = 0;
-        dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
+        dposv_internal("L", &three, &one, amat, &three, bmat, &three, &info);
         if (info != 0)
           warning("Not a positive definite matrix", " in PSF model solver");
 
@@ -1114,7 +1114,7 @@ int     psf_refine(psfstruct *psf, setstruct *set)
 //  NFPRINTF(OUTPUT,"Solving the system...");
 
   integer one = 1, info = 0, num = nunknown;
-  dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
+  dposv_internal("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
     warning("Not a positive definite matrix"," in PSF model refinement solver");
 

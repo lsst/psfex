@@ -228,7 +228,7 @@ void    psf_homo(psfstruct *psf, char *filename, double *homopsf_params,
   free(tcross);
 
   integer one = 1, info = 0, num = nfree;
-  dposv_("L", &num, &one, amat, &num, bmat, &num, &info);
+  dposv_internal("L", &num, &one, amat, &num, bmat, &num, &info);
   if (info != 0)
     warning("Not a positive definite matrix", " in homogenization solver");
 

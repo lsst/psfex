@@ -5,6 +5,12 @@
  avoid a dependancy on anything fortran. the source can be found in src/clapack.c
 */
 
-void dposv_(char *, long *, long *, double *, long *, double *, long *, long *);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void dposv_internal(char *, long *, long *, double *, long *, double *, long *, long *);
 
-void dtrtri_(char *, char *, long *, double *, long *, long *);
+void dtrtri_internal(char *, char *, long *, double *, long *, long *);
+#ifdef __cplusplus
+}
+#endif

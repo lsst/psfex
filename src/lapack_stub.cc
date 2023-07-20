@@ -2,7 +2,7 @@
  This code reproduces two of the functions of lapack with an implementation
  using gsl. This allows the use of these functions without the need to link to
  any fortran code. For compatibility, all of the same arguments are taken, but
- some of the arguments may not be used. For instance dposv_ takes an argument U
+ some of the arguments may not be used. For instance dposv_internal takes an argument U
  or L but will actually return the full solution, not simply the upper or
  lower part.
 */
@@ -10,8 +10,9 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
+#include "lapack_stub.h"
 
-void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, long *LDB, long *info)
+void dposv_internal(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, long *LDB, long *info)
 {
         /*
           Note:
@@ -89,7 +90,7 @@ void dposv_(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, lo
 }
 
 
-void dtrtri_(char *UPLO, char *DIAG, long *N, double *A, long *LDA, long *info)
+void dtrtri_internal(char *UPLO, char *DIAG, long *N, double *A, long *LDA, long *info)
 {
         /*
         Note:
