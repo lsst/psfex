@@ -1149,28 +1149,32 @@ int     psf_refine(psfstruct *psf, setstruct *set)
   int ii, jj;
 
   // fprintf(stderr, "%ld, %ld\n", num, num);
-  double sum = 0;
+  double sum = 0.0;
+  double sumb = 0.0;
   for (ii = 0; ii < num; ii++) {
       for (jj = 0; jj < num; jj++) {
           // fprintf(stderr, "%lf ", alphamat[ii * num + jj]);
           sum += alphamat[ii * num + jj];
       }
+      sumb += betamat[ii];
       // fprintf(stderr, "\n--\n");
   }
-  fprintf(stderr, "sum before = %lf\n", sum);
+  fprintf(stderr, "sum before = %lf, %lf\n", sum, sumb);
 
   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
 
   sum = 0.0;
+  sumb = 0.0;
   // fprintf(stderr, "%ld, %ld\n", num, num);
   for (ii = 0; ii < num; ii++) {
       for (jj = 0; jj < num; jj++) {
           // fprintf(stderr, "%lf ", alphamat[ii * num + jj]);
           sum += alphamat[ii * num + jj];
       }
+      sumb += betamat[ii];
       // fprintf(stderr, "\n--\n");
   }
-  fprintf(stderr, "sum after = %lf\n", sum);
+  fprintf(stderr, "sum after = %lf, %lf\n", sum, sumb);
 
   if (info != 0)
 #else
