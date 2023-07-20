@@ -524,7 +524,7 @@ int     poly_solve(double *a, double *b, int n)
   return clapack_dposv(CblasRowMajor, CblasUpper, n, 1, a, n, b, n);
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = n;
-  dposv_("L", &num, &one, a, &num, b, &num, &info);
+  dposv_internal("L", &num, &one, a, &num, b, &num, &info);
   return info;
 #else
   return cholsolve(a,b,n);
@@ -742,7 +742,7 @@ void    poly_initortho(polystruct *poly, double *data, int ndata)
         poly->orthomat, ncoeff);
 #elif defined(HAVE_CLAPACK) || defined(HAVE_CLAPACK_STUB)
   integer info = 0, num = ncoeff;
-  dtrtri_("L", "N", &num, poly->orthomat, &num, &info);
+  dtrtri_internal("L", "N", &num, poly->orthomat, &num, &info);
 #else
   qerror("*Internal Error*: no routine available", " for triangular inverse");
 #endif
