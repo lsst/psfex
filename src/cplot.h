@@ -69,26 +69,5 @@ typedef enum {CPLOT_NULL, CPLOT_XWIN, CPLOT_TK, CPLOT_XTERM, CPLOT_PLMETA,
 typedef struct {cplotdevenum device; char *devname; char *extension;}
 		devicestruct;
 
-/*---------------------------------- svgp -----------------------------------*/
-/*------------------------------- functions ---------------------------------*/
-
-extern int		cplot_modchi2(fieldstruct *field),
-			cplot_modresi(fieldstruct *field),
-			cplot_countfrac(fieldstruct *field),
-			cplot_counts(fieldstruct *field),
-			cplot_check(cplotenum cplottype),
-			cplot_drawbounds(wcsstruct *wcsin, wcsstruct *wcsout),
-			cplot_drawloccoordgrid(wcsstruct *wcs, double xmin,
-					double xmax, double ymin, double ymax),
-			cplot_ellipticity(fieldstruct *field),
-			cplot_end(cplotenum cplottype),
-			cplot_fwhm(fieldstruct *field),
-			cplot_init(char *name, int nx, int ny,
-				cplotenum cplottype),
-			cplot_moffatresi(fieldstruct *field),
-			cplot_asymresi(fieldstruct *field);
-			
-char			*cplot_degtosexal(char *str, double alpha,double step),
-			*cplot_degtosexde(char *str, double delta,double step);
 #endif
 

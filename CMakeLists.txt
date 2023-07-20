@@ -19,6 +19,7 @@ pkg_search_module(FFTW3 REQUIRED fftw3f)
 find_package(GSL REQUIRED)
 
 set(SOURCE_FILES
+    src/fits/fitsmisc.c
     src/levmar/Axb.c
     src/levmar/lm.c
     src/levmar/lmbc.c
@@ -33,7 +34,6 @@ set(SOURCE_FILES
     src/fft.c
     src/field_utils.c
     src/field.c
-    src/fits/fitsmisc.c
     src/homo.c
     src/lapack_stub.c
     src/makeit2.c
