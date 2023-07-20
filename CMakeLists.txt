@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(psfex VERSION "3.0.0" LANGUAGES C)
+project(psfex VERSION "3.0.0" LANGUAGES C CXX)
 
 set(DEFAULT_BUILD_TYPE "Release")
 
@@ -35,7 +35,7 @@ set(SOURCE_FILES
     src/field_utils.c
     src/field.c
     src/homo.c
-    src/lapack_stub.c
+    src/lapack_stub.cc
     src/makeit2.c
     src/misc.c
     src/pca.c
