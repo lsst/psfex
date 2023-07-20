@@ -800,7 +800,7 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
  #endif
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
         integer one = 1, three = 3, info = 0;
-        dposv_("L", &three, &one, amat, &three, bmat, &three, &info);
+        dposv_internal("L", &three, &one, amat, &three, bmat, &three, &info);
         if (info != 0)
 #else
         if (clapack_dposv(CblasRowMajor,CblasUpper,3,1,amat,3,bmat,3) != 0)
@@ -1133,7 +1133,7 @@ int     psf_refine(psfstruct *psf, setstruct *set)
  #endif
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nunknown;
-  dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
+  dposv_internal("L", &num, &one, alphamat, &num, betamat, &num, &info);
   if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,
