@@ -838,7 +838,7 @@ void    psf_makeresi(psfstruct *psf, setstruct *set, int centflag,
         }
       }
 
-    fprintf(stderr, "about to resample...\n");
+    // fprintf(stderr, "about to resample...\n");
 /*-- Map the PSF model at the current position */
     vignet_resample(psf->loc, psf->size[0], psf->size[1],
         sample->vigresi, set->vigsize[0], set->vigsize[1],
@@ -1146,7 +1146,32 @@ int     psf_refine(psfstruct *psf, setstruct *set)
 #elif defined(HAVE_CLAPACK) || defined(HAVE_LAPACK_STUB)
   integer one = 1, info = 0, num = nunknown;
   fprintf(stderr, "Another dposv chance!\n");
+  int ii, jj;
+
+  // fprintf(stderr, "%ld, %ld\n", num, num);
+  double sum = 0;
+  for (ii = 0; ii < num; ii++) {
+      for (jj = 0; jj < num; jj++) {
+          // fprintf(stderr, "%lf ", alphamat[ii * num + jj]);
+          sum += alphamat[ii * num + jj];
+      }
+      // fprintf(stderr, "\n--\n");
+  }
+  fprintf(stderr, "sum before = %lf\n", sum);
+
   dposv_("L", &num, &one, alphamat, &num, betamat, &num, &info);
+
+  sum = 0.0;
+  // fprintf(stderr, "%ld, %ld\n", num, num);
+  for (ii = 0; ii < num; ii++) {
+      for (jj = 0; jj < num; jj++) {
+          // fprintf(stderr, "%lf ", alphamat[ii * num + jj]);
+          sum += alphamat[ii * num + jj];
+      }
+      // fprintf(stderr, "\n--\n");
+  }
+  fprintf(stderr, "sum after = %lf\n", sum);
+
   if (info != 0)
 #else
   if (clapack_dposv(CblasRowMajor,CblasUpper,nunknown,1,alphamat,nunknown,
