@@ -1,25 +1,3 @@
-Makefile
-config.h
-config.status
-libtool
-man/Makefile
-psfex.spec
-src/.deps/
-src/Makefile
-src/fits/.deps/
-src/fits/Makefile
-src/levmar/.deps/
-src/levmar/Makefile
-src/wcs/.deps/
-src/wcs/Makefile
-stamp-h1
-autom4te.cache/
-src/fits/libfits.a
-src/levmar/liblevmar.a
-src/psfex
-src/wcs/libwcs_c.a
-man/psfex.1
-
 # Produced by scons, in building the library
 .sconf_temp/
 .sconsign.dblite

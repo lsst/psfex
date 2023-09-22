@@ -13,8 +13,7 @@ endif()
 
 include(GNUInstallDirs)
 
-include(FindPkgConfig)
-pkg_search_module(FFTW3 REQUIRED fftw3f)
+find_library(FFTW3 fftw3 REQUIRED)
 
 find_package(GSL REQUIRED)
 
@@ -47,7 +46,9 @@ set(SOURCE_FILES
     src/xml.c
 )
 
-add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wno-unknown-pragmas -Wno-unused-local-typedefs)
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
@@ -64,4 +65,15 @@ target_link_libraries(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
-    SOVERSION 1)
+    POSITION_INDEPENDENT_CODE ON)
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
+)
+
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/src/"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
+        FILES_MATCHING
+        PATTERN "*.h"
+)
+
