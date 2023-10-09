@@ -44,10 +44,5 @@ typedef enum {PSF_NONE, PSF_BASIS, PSF_CHI, PSF_PROTO, PSF_RESIDUALS,
 		PSF_WEIGHTS, PSF_MOFFAT,PSF_SUBMOFFAT,PSF_SUBSYM, PSF_GREAT}
 	checkenum;
 
-/*---------------------------------- protos --------------------------------*/
-extern void		check_write(fieldstruct *field,	setstruct *set,
-				char *checkname, checkenum checktype,
-				int ext, int next, int cubeflag);
-
 #endif
 

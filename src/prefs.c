@@ -45,10 +45,6 @@
  #include	<sys/mpctl.h>
 #endif
 
-#ifdef HAVE_MKL
- #include MKL_H
-#endif
-
 #include	"define.h"
 #include	"types.h"
 #include	"globals.h"
@@ -91,11 +87,8 @@ void    readprefs(char *filename, char **argkey, char **argval, int narg)
 		*cp,  *keyword, *value, **dp;
    int		i, ival, nkey, warn, argi, flagc, flagd, flage, flagz;
    double	dval;
-#ifdef	HAVE_GETENV
    static char	value2[MAXCHARL],envname[MAXCHAR];
    char		*dolpos, *listbuf;
-#endif
-
 
   if ((infile = fopen(filename,"r")) == NULL)
     {
@@ -524,21 +517,17 @@ void	useprefs()
       }
     }
 
-#ifdef HAVE_MKL
-  mkl_set_num_threads(prefs.nthreads);
-#else
- #ifndef HAVE_ATLAS_MP
-   if (prefs.nthreads>1)
-     warning("This executable has been compiled using a version of the ATLAS "
-	"library without support for multithreading. ",
-	"Performance will be degraded.");
- #endif
- #ifndef HAVE_FFTWF_MP
-   if (prefs.nthreads>1)
-     warning("This executable has been compiled using a version of the FFTW "
-	"library without support for multithreading. ",
-	"Performance will be degraded.");
- #endif
+#ifndef HAVE_ATLAS_MP
+  if (prefs.nthreads>1)
+    warning("This executable has been compiled using a version of the ATLAS "
+"library without support for multithreading. ",
+"Performance will be degraded.");
+#endif
+#ifndef HAVE_FFTWF_MP
+  if (prefs.nthreads>1)
+    warning("This executable has been compiled using a version of the FFTW "
+"library without support for multithreading. ",
+"Performance will be degraded.");
 #endif
 
 #else

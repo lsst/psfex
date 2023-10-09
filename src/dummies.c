@@ -189,6 +189,11 @@ check_write(fieldstruct *field, setstruct *set,
     ;
 }
 
+/* static linking revealed load_samples is also defined in
+   https://github.com/lsst/psfex/blob/main/src/dummies.c 
+   Remove from libpsfex.a */
+
+#if 0
 setstruct *
 load_samples(char **filenames, int catindex, int ncat, int ext,
              int next, contextstruct *context)
@@ -240,3 +245,4 @@ load_samples(char **filenames, int catindex, int ncat, int ext,
 
     return set;
 }
+#endif

@@ -10,6 +10,7 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_blas.h>
+#include "lapack_stub.h"
 
 void dposv_internal(char *UPLO, long *N, long *NRHS, double *A, long *LDA, double *B, long *LDB, long *info)
 {
