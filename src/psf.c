@@ -281,48 +281,149 @@ psfstruct       *psf_init(contextstruct *context, int *size,
   names2 = NULL;
   group2 = dim2 = NULL;
   ndim2 = ndim = context->ncontext;
-  if (ndim)
-    {
-    QMEMCPY(context->group, group2, int, ndim);
-    QMEMCPY(context->name, names2, char *, ndim);
-    }
-  if ((ngroup2=context->ngroup))
-    QMEMCPY(context->degree, dim2, int, context->ngroup);
+
+  // Note: number of dependency parameters == dimensionality of the polynomial == degree of the polynomial
+  printf("** Initializing PSF structure...\n");
+  printf("** PSF model image size: %d pixels\n", *size);
+  printf("** PSF pixel step: %f\n", psfstep);
+  printf("** Number of dependency parameters to start with (ndim): %d\n", ndim);
+  printf("** Note: Number of dependency parameters == Dimensionality of the polynomial == Degree of the polynomial\n");
+  printf("** Note: Suffix 2 is used for temporary quantities that are subject to change during polynomial fitting\n");
+
+  if (ndim) {
+      QMEMCPY(context->group, group2, int, ndim);
+      QMEMCPY(context->name, names2, char *, ndim);
+
+      printf("** Copied context group to group2 and context name to names2 because ndim!=0\n");
+      printf("** group2: ");
+      for (int i = 0; i < ndim; ++i) {
+          printf("group2[%d] = %d", i, group2[i]);
+          if (i < ndim - 1)
+              printf(", ");
+      }
+      printf("\n** names2: ");
+      for (int i = 0; i < ndim; ++i) {
+          printf("names2[%d] = %s", i, names2[i]);
+          if (i < ndim - 1)
+              printf(", ");
+      }
+      printf("\n");
+  }
+
+  if ((ngroup2 = context->ngroup)) {
+      QMEMCPY(context->degree, dim2, int, context->ngroup);
+
+      printf("** Copied context degree to dim2 because ngroup2 (%d) equals context->ngroup (%d)\n", ngroup2, context->ngroup);
+      printf("** dim2: ");
+      for (int i = 0; i < ngroup2; ++i) {
+          printf("dim2[%d] = %d", i, dim2[i]);
+          if (i < ngroup2 - 1)
+              printf(", ");
+      }
+      printf("\n");
+  }
+
+  printf("** Before polynomial initialization\n");
+  printf("** Number of dependency parameters (ndim2): %d, Number of groups (ngroup2): %d\n", ndim2, ngroup2);
 
   psf->poly = poly_init(group2, ndim2, dim2, ngroup2);
 
-/* Add additional constraint for supersampled PSFs */
-  psfelemdens = (psfstep>0.0 && psfstep<1.0)? 1.0/psfstep*psfstep : 1.0;
-/*-- Compute the maximum advised number of degrees of freedom */
-  if (ngroup2)
-    while (psf->poly->ncoeff*psfelemdens*PSF_FREEDFACTOR+0.499 > nsample)
-      {
-      poly_end(psf->poly);
-      if (ngroup2)
-        {
-/*------ If still too many degrees of freedom, try to lower degrees */
-        d=ngroup2%10;
-        sprintf(str, "%d%s", ngroup2, d==1?"st":(d==2?"nd":(d==3?"rd":"th")));
-        if (!(--dim2[ngroup2-1]))
-          {
-/*------ If degree is 0, just remove all the group components */
-          for (d=0; d<ndim2; d++)
-            if (group2[d]==ngroup2 && d!=(--ndim2))
-              {
-              names2[d]=names2[ndim2];
-              group2[d]=group2[ndim2];
+  printf("** Polynomial initialized for the first time!\n");
+
+  /* Add additional constraint for supersampled PSFs */
+  psfelemdens = (psfstep > 0.0 && psfstep < 1.0) ? 1.0 / psfstep * psfstep : 1.0;
+
+  printf("** PSF model element density: %f\n", psfelemdens);
+
+  /* Compute the maximum advised number of degrees of freedom */
+  if (ngroup2) {
+      while (psf->poly->ncoeff * psfelemdens * PSF_FREEDFACTOR + 0.499 > nsample) {
+          printf("** Entering while loop to adjust degrees of freedom\n");
+          printf("** Current number of coefficients (ncoeff): %d\n", psf->poly->ncoeff);
+          printf("** Number of samples (nsample): %d\n", nsample);
+          printf("** Scaled degrees of freedom threshold: %f (> nsample = %d) \n", psf->poly->ncoeff * psfelemdens * PSF_FREEDFACTOR + 0.499, nsample);
+
+          poly_end(psf->poly);
+
+          if (ngroup2) {
+              /* If still too many degrees of freedom, try to lower degrees */
+              d = ngroup2 % 10;
+              printf("** [ngroup2: %d] Calculated last digit of ngroup2 to be %d for ordinal suffix\n", ngroup2, d);
+              sprintf(str, "%d%s", ngroup2, (d == 1) ? "st" : (d == 2) ? "nd" : (d == 3) ? "rd" : "th");
+
+              printf("** The group-degree with ngroup2 = %d is %d\n", ngroup2, dim2[ngroup2 - 1]);
+              printf("** Lowered group-degree with ngroup2 = %d from %d to %d\n", ngroup2, dim2[ngroup2 - 1], dim2[ngroup2 - 1] - 1);
+              if (!(--dim2[ngroup2 - 1])) {  // --> The line responsible for lowering the context group-degree!
+                  /* If degree is 0, remove all components of this group */
+                  printf("** The group-degree with ngroup2 = %d is %d, therefore we'll remove all components of this group\n", ngroup2, dim2[ngroup2 - 1]);
+                  for (d = 0; d < ndim2; d++) {
+                      if (group2[d] == ngroup2 && d != (--ndim2)) {
+                          printf("** [d: %d, ndim2: %d, ngroup2: %d] Replaced context group components with the last components in the arrays:\n", d, ndim2, ngroup2, names2[d], names2[ndim2]);
+                          printf("   - names2[%d]: %s -> %s\n", d, names2[d], names2[ndim2]);
+                          printf("   - group2[%d]: %d -> %d\n", d, group2[d], group2[ndim2]);
+                          names2[d] = names2[ndim2];
+                          group2[d] = group2[ndim2];
+                      }
+                  }
+
+                  printf("** Removed context group due to lack of samples\n");
+                  warning(str, " context group removed (not enough samples)");
+
+                  printf("** The number of context groups decreased from %d to %d", ngroup2, ngroup2 - 1);
+                  if (!(--ngroup2)) {
+                      // Last time we had to lower the contet group-degree to 0 was with ngroups2 = 1.
+                      // This is a dead end since we don't afford to lower ngroups2 any further.
+                      ndim2 = 0;
+                      printf(" (this is a dead end)\n** No group is left -> Set the number of dependency parameters (ndim2) to 0\n", ngroup2);
+                  } else {
+                      printf("\n");
+                  }
+              } else {
+                  warning(str, " context group-degree lowered (not enough samples)");
               }
-          warning(str, " context group removed (not enough samples)");
-          if (!(--ngroup2))
-            ndim2 = 0;
+
+              printf("** Adjusted number of dependency parameters (ndim2) is %d with %d group(s)\n", ndim2, ngroup2);
+
+              psf->poly = poly_init(group2, ndim2, dim2, ngroup2);
+              printf("** Initialized polynomial again\n");
           }
-        else
-          warning(str, " context group-degree lowered (not enough samples)");
-        psf->poly = poly_init(group2, ndim2, dim2, ngroup2);
-        }
-      if (!ngroup2)
-        break;  /* No sample at all!*/
+
+          if (!ngroup2) {
+              printf("** No samples available because the last iteration left us with no groups\n** We now have %d dependency parameters (ndim2)!\n", ndim2);
+              break;  /* No samples available */
+          }
+          printf("** Updated number of coefficients after adjustments: %d\n", psf->poly->ncoeff);
+          printf("** Scaled degrees of freedom after adjustments: %f\n", psf->poly->ncoeff * psfelemdens * PSF_FREEDFACTOR + 0.499);
       }
+
+      printf("** Exited while loop\n");
+  }
+
+  printf("------------------------------- Final Values -------------------------------\n");
+  printf("** Number of dependency parameters (ndim2): %d, Number of groups (ngroup2): %d\n", ndim2, ngroup2);
+  printf("** group2: ");
+  for (int i = 0; i < context->ncontext; ++i) {
+      printf("group2[%d] = %d", i, group2[i]);
+      if (i < context->ncontext - 1)
+        printf(", ");
+  }
+  printf("\n** names2: ");
+  for (int i = 0; i < context->ncontext; ++i) {
+      printf("names2[%d] = %s", i, names2[i]);
+      if (i < context->ncontext - 1)
+          printf(", ");
+  }
+  printf("\n** dim2: ");
+  for (int i = 0; i < context->ngroup; ++i) {
+      printf("dim2[%d] = %d", i, dim2[i]);
+      if (i < context->ngroup - 1)
+          printf(", ");
+  }
+
+  printf("\n** PSF model element density: %f\n", psfelemdens);
+  printf("** PSF model number of coefficients: %d\n", psf->poly->ncoeff);
+  printf("** PSF model scaled degrees of freedom threshold: %f\n", psf->poly->ncoeff * psfelemdens * PSF_FREEDFACTOR + 0.499);
+  printf("** Number of samples: %d\n", nsample);
 
   psf->pixstep = psfstep;
   psf->pixsize[0] = pixsize[0];
