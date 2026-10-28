@@ -1,0 +1,10 @@
+prefix=${pcfiledir}/../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: lsst_psfex
+Description: PSFEx point spread function modeling library
+Version: @VERSION@
+Requires: fftw3 fftw3f gsl
+Cflags: -I${includedir}
+Libs: -L${libdir} -lpsfex

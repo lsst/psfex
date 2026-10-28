@@ -1,6 +1,6 @@
 build() {
   mkdir build
-  cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$PREFIX
+  cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$PREFIX -DLSST_PSFEX_VERSION="$VERSION"
   cmake --build build --config Release
 }
 
