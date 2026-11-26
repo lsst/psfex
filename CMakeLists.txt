@@ -71,6 +71,16 @@ install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
 )
 
+# The pkg-config module consumed by sconsUtils packages; eupspkg passes the
+# EUPS version in LSST_PSFEX_VERSION.
+if(NOT DEFINED LSST_PSFEX_VERSION)
+  set(LSST_PSFEX_VERSION "${PROJECT_VERSION}")
+endif()
+set(VERSION "${LSST_PSFEX_VERSION}")
+configure_file(lsst_psfex.pc.in "${CMAKE_BINARY_DIR}/lsst_psfex.pc" @ONLY)
+install(FILES "${CMAKE_BINARY_DIR}/lsst_psfex.pc"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
+
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/src/"
         DESTINATION "${CMAKE_INSTALL_PREFIX}/include"
         FILES_MATCHING
